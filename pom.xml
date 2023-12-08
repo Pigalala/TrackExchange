@@ -12,7 +12,6 @@
   <name>TrackExchange</name>
 
   <properties>
-    <java.version>17</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -21,16 +20,33 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.11.0</version>
         <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
+          <source>17</source>
+          <target>17</target>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
+        <version>3.3.0</version>
+        <configuration>
+          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
+          <relocations>
+            <relocation>
+              <pattern>co.aikar.commands</pattern>
+              <shadedPattern>me.pigalala.trackexchange.acf</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>co.aikar.taskchain</pattern>
+              <shadedPattern>me.pigalala.trackexchange.taskchain</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>co.aikar.locales</pattern>
+              <shadedPattern>me.pigalala.trackexchange.locales</shadedPattern>
+            </relocation>
+          </relocations>
+        </configuration>
         <executions>
           <execution>
             <phase>package</phase>
@@ -55,6 +71,14 @@
       <url>https://papermc.io/repo/repository/maven-public/</url>
     </repository>
     <repository>
+      <id>maven</id>
+      <url>https://maven.enginehub.org/repo/</url>
+    </repository>
+    <repository>
+      <id>aikar</id>
+      <url>https://repo.aikar.co/content/groups/aikar/</url>
+    </repository>
+    <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
     </repository>
@@ -70,8 +94,32 @@
     <dependency>
       <groupId>com.github.Makkuusen</groupId>
       <artifactId>TimingSystem</artifactId>
-      <version>ab622eb</version>
+      <version>1.9</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sk89q.worldedit</groupId>
+      <artifactId>worldedit-bukkit</artifactId>
+      <version>7.2.10</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.aikar</groupId>
+      <artifactId>acf-paper</artifactId>
+      <version>0.5.1-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.aikar</groupId>
+      <artifactId>taskchain-bukkit</artifactId>
+      <version>3.7.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.24</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>
