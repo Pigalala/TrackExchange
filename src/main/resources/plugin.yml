@@ -3,5 +3,15 @@ version: '${project.version}'
 main: me.pigalala.trackexchange.TrackExchange
 api-version: '1.20'
 load: STARTUP
-depend: [TimingSystem]
+depend: [TimingSystem, WorldEdit]
 authors: [Pigalala]
+
+commands:
+  trackexchange:
+    aliases: [te]
+
+permissions:
+  trackexchange.export:
+    default: op
+  trackexchange.import:
+    default: op
