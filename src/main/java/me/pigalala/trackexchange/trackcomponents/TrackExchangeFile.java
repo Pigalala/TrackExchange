@@ -6,7 +6,6 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
 import lombok.Getter;
 import me.pigalala.trackexchange.TrackExchange;
-import me.pigalala.trackexchange.utils.SimpleLocation;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -73,7 +72,7 @@ public class TrackExchangeFile {
         dir.delete();
     }
 
-    public static TrackExchangeFile read(File trackDir, String newName) throws IOException {
+    public static TrackExchangeFile read(File trackDir, String newName) throws Exception {
         unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName() + ".zip"), TrackExchange.instance.getDataFolder());
 
         File dataFile = new File(TrackExchange.instance.getDataFolder(), "data.trackexchange");
@@ -81,22 +80,17 @@ public class TrackExchangeFile {
         File schematicFile = new File(TrackExchange.instance.getDataFolder(), "schematic.trackexchange");
 
         SimpleLocation clipboardOffset;
-        try(FileReader reader = new FileReader(dataFile)) {
+        try (FileReader reader = new FileReader(dataFile)) {
             JSONParser parser = new JSONParser();
             JSONObject data = (JSONObject) parser.parse(reader);
-            int version = Integer.parseInt(String.valueOf(data.get("version")));
+            int version = Integer.parseInt(String.valueOf(data.get("version"))); // TODO: use this
             clipboardOffset = SimpleLocation.fromJson((JSONObject) data.get("clipboardOffset"));
-        } catch (ParseException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
 
         TrackExchangeTrack trackExchangeTrack;
         try(FileInputStream fileIn = new FileInputStream(trackFile); ObjectInputStream in = new ObjectInputStream(fileIn)) {
             trackExchangeTrack = (TrackExchangeTrack) in.readObject();
             trackExchangeTrack.setDisplayName(newName);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
 
         TrackExchangeSchematic trackExchangeSchematic = null;
@@ -165,5 +159,11 @@ public class TrackExchangeFile {
     public static boolean trackExchangeFileAlreadyExists(String fileName) {
         File f = new File(TrackExchange.instance.getDataFolder(), fileName + ".zip");
         return f.exists();
+    }
+
+    public static void cleanup() {
+        new File(TrackExchange.instance.getDataFolder(), "data.trackexchange").delete();
+        new File(TrackExchange.instance.getDataFolder(), "track.trackexchange").delete();
+        new File(TrackExchange.instance.getDataFolder(), "schematic.trackexchange").delete();
     }
 }

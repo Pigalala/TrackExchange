@@ -9,7 +9,6 @@ import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import lombok.Getter;
 import lombok.Setter;
-import me.pigalala.trackexchange.utils.SimpleLocation;
 import org.bukkit.Location;
 
 @Getter

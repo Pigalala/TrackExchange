@@ -1,4 +1,4 @@
-package me.pigalala.trackexchange.utils;
+package me.pigalala.trackexchange.trackcomponents;
 
 import com.sk89q.worldedit.math.BlockVector3;
 import org.bukkit.Location;

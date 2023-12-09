@@ -1,10 +1,8 @@
 package me.pigalala.trackexchange.trackcomponents;
 
-import me.makkuusen.timing.system.ApiUtilities;
 import me.makkuusen.timing.system.track.Track;
 import me.makkuusen.timing.system.track.TrackDatabase;
 import me.makkuusen.timing.system.track.TrackLocation;
-import me.pigalala.trackexchange.utils.SimpleLocation;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
