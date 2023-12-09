@@ -1,7 +1,6 @@
 package me.pigalala.trackexchange.exceptions;
 
-// TODO: Remove this pls :)
-public class TrackFileAlreadyExistsException extends RuntimeException {
+public class TrackFileAlreadyExistsException extends TrackExchangeException {
 
     public TrackFileAlreadyExistsException() {
         super("A TrackExchange file with this name already exists");

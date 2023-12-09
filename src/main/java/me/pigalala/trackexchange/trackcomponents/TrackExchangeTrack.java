@@ -9,7 +9,6 @@ import me.makkuusen.timing.system.api.TimingSystemAPI;
 import me.makkuusen.timing.system.idb.DB;
 import me.makkuusen.timing.system.idb.DbRow;
 import me.makkuusen.timing.system.track.*;
-import me.pigalala.trackexchange.utils.SimpleLocation;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
