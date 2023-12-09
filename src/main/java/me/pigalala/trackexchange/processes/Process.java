@@ -14,8 +14,8 @@ public interface Process {
         return Component.text("Beginning process '" + processName() + "'.", TextColor.color(0xF38AFF));
     }
 
-    default Component getProcessFinishText() {
-        return Component.text("Process '" + processName() + "' completed.", NamedTextColor.GREEN);
+    default Component getProcessFinishText(long timeTaken) {
+        return Component.text("Process '" + processName() + "' completed in " + timeTaken + "ms.", NamedTextColor.GREEN);
     }
 
     default Component getProcessFinishExceptionallyText() {
@@ -26,8 +26,8 @@ public interface Process {
         return Component.text("Beginning stage '" + stage +"'", TextColor.color(0xF38AFF));
     }
 
-    default Component getStageFinishText(String stage) {
-        return Component.text("Completed stage '" + stage + "'.", NamedTextColor.GREEN);
+    default Component getStageFinishText(String stage, long timeTaken) {
+        return Component.text("Completed stage '" + stage + "' in " + timeTaken + "ms.", NamedTextColor.GREEN);
     }
 
     default Component getStageFinishExceptionallyText(String stage, Throwable cause) {

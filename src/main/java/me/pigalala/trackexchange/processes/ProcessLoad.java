@@ -32,13 +32,15 @@ public class ProcessLoad implements Process {
 
     @Override
     public void execute() {
+        final long startTime = System.currentTimeMillis();
+
         player.sendMessage(getProcessStartText());
         chain.async(this::doReadStage)
                 .async(this::doTrackStage)
                 .async(this::doPasteStage)
                 .execute((success) -> {
                     if (success)
-                        player.sendMessage(getProcessFinishText());
+                        player.sendMessage(getProcessFinishText(System.currentTimeMillis() - startTime));
                     else
                         player.sendMessage(getProcessFinishExceptionallyText());
                     TrackExchangeFile.cleanup();
@@ -48,11 +50,13 @@ public class ProcessLoad implements Process {
 
     private void doReadStage() {
         final String stage = "READ";
+        final long startTime = System.currentTimeMillis();
+
         player.sendMessage(getStageBeginText(stage));
         try {
             TrackExchangeFile trackExchangeFile = TrackExchangeFile.read(new File(TrackExchange.instance.getDataFolder(), fileName), loadAs);
             chain.setTaskData("trackExchangeFile", trackExchangeFile);
-            player.sendMessage(getStageFinishText(stage));
+            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
         } catch (Exception e) {
             player.sendMessage(getStageFinishExceptionallyText(stage, e));
             chain.abortChain();
@@ -61,11 +65,13 @@ public class ProcessLoad implements Process {
 
     private void doTrackStage() {
         final String stage = "TRACK";
+        final long startTime = System.currentTimeMillis();
+
         player.sendMessage(getStageBeginText(stage));
         TrackExchangeFile trackExchangeFile = chain.getTaskData("trackExchangeFile");
         try {
             trackExchangeFile.getTrack().createTrack(player);
-            player.sendMessage(getStageFinishText(stage));
+            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
         } catch (SQLException e) {
             player.sendMessage(getStageFinishExceptionallyText(stage, e));
             chain.abortChain();
@@ -74,12 +80,14 @@ public class ProcessLoad implements Process {
 
     private void doPasteStage() {
         final String stage = "PASTE";
+        final long startTime = System.currentTimeMillis();
+
         TrackExchangeFile trackExchangeFile = chain.getTaskData("trackExchangeFile");
         trackExchangeFile.getSchematic().ifPresentOrElse(schematic -> {
             player.sendMessage(getStageBeginText(stage));
             try {
                 schematic.pasteAt(origin);
-                player.sendMessage(getStageFinishText(stage));
+                player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
             } catch (WorldEditException e) {
                 player.sendMessage(getStageFinishExceptionallyText(stage, e));
             }
