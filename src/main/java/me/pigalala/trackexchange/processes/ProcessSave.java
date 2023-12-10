@@ -89,7 +89,7 @@ public class ProcessSave implements Process {
     }
 
     private void doWriteStage() {
-        final String stage = "TRACK";
+        final String stage = "WRITE";
         final long startTime = System.currentTimeMillis();
 
         player.sendMessage(getStageBeginText(stage));

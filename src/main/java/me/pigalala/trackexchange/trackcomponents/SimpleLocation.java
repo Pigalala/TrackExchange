@@ -10,24 +10,24 @@ import java.io.Serializable;
 
 public class SimpleLocation implements Serializable {
 
-    private final int x;
-    private final int y;
-    private final int z;
+    private final double x;
+    private final double y;
+    private final double z;
     private final float yaw;
     private final float pitch;
 
     public SimpleLocation(Location location) {
-        x = location.getBlockX();
-        y = location.getBlockY();
-        z = location.getBlockZ();
+        x = location.getX();
+        y = location.getY();
+        z = location.getZ();
         yaw = location.getYaw();
         pitch = location.getPitch();
     }
 
     public SimpleLocation(BlockVector3 vector) {
-        x = vector.getBlockX();
-        y = vector.getBlockY();
-        z = vector.getBlockZ();
+        x = vector.getX();
+        y = vector.getY();
+        z = vector.getZ();
         yaw = 0;
         pitch = 0;
     }
@@ -49,9 +49,9 @@ public class SimpleLocation implements Serializable {
     }
 
     public static SimpleLocation fromJson(JSONObject jsonObject) {
-        int x = Integer.parseInt(String.valueOf(jsonObject.get("x")));
-        int y = Integer.parseInt(String.valueOf(jsonObject.get("y")));
-        int z = Integer.parseInt(String.valueOf(jsonObject.get("z")));
+        double x = Double.parseDouble(String.valueOf(jsonObject.get("x")));
+        double y = Double.parseDouble(String.valueOf(jsonObject.get("y")));
+        double z = Double.parseDouble(String.valueOf(jsonObject.get("z")));
         return new SimpleLocation(BlockVector3.at(x, y, z));
     }
 
