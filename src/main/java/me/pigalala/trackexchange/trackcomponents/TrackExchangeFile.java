@@ -82,7 +82,9 @@ public class TrackExchangeFile {
         try (FileReader reader = new FileReader(dataFile)) {
             JSONParser parser = new JSONParser();
             JSONObject data = (JSONObject) parser.parse(reader);
-            int version = Integer.parseInt(String.valueOf(data.get("version"))); // TODO: use this
+            int version = Integer.parseInt(String.valueOf(data.get("version")));
+            if(version != TrackExchange.TRACK_VERSION)
+                throw new RuntimeException("This track's version does not match the server's version. (Track: " + version + ". Server: " + TrackExchange.TRACK_VERSION + ")");
             clipboardOffset = SimpleLocation.fromJson((JSONObject) data.get("clipboardOffset"));
         }
 
