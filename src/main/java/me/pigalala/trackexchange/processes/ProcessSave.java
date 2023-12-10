@@ -43,13 +43,15 @@ public class ProcessSave implements Process {
 
     @Override
     public void execute() {
+        final long startTime = System.currentTimeMillis();
         player.sendMessage(getProcessStartText());
+
         chain.async(this::doTrackStage)
                 .async(this::doSchematicStage)
                 .async(this::doWriteStage)
                 .execute((success) -> {
                     if(success)
-                        player.sendMessage(getProcessFinishText());
+                        player.sendMessage(getProcessFinishText(System.currentTimeMillis() - startTime));
                     else
                         player.sendMessage(getProcessFinishExceptionallyText());
                 });
@@ -57,14 +59,18 @@ public class ProcessSave implements Process {
 
     private void doTrackStage() {
         final String stage = "TRACK";
+        final long startTime = System.currentTimeMillis();
+
         player.sendMessage(getStageBeginText(stage));
         TrackExchangeTrack trackExchangeTrack = new TrackExchangeTrack(track, new SimpleLocation(origin));
         chain.setTaskData("track", trackExchangeTrack);
-        player.sendMessage(getStageFinishText(stage));
+        player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
     }
 
     private void doSchematicStage() {
         final String stage = "SCHEMATIC";
+        final long startTime = System.currentTimeMillis();
+
         player.sendMessage(getStageBeginText(stage));
         try {
             Region r = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(player)).getSelection();
@@ -73,7 +79,7 @@ public class ProcessSave implements Process {
             BlockArrayClipboard clipboard = new BlockArrayClipboard(r);
             Operations.complete(new ForwardExtentCopy(BukkitAdapter.adapt(player.getWorld()), r, clipboard, r.getMinimumPoint()));
             chain.setTaskData("schematic", new TrackExchangeSchematic(clipboard));
-            player.sendMessage(getStageFinishText(stage));
+            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
         } catch (WorldEditException e) {
             if(e instanceof IncompleteRegionException)
                 player.sendMessage(Component.text("Saving without Schematic.", NamedTextColor.YELLOW));
@@ -84,13 +90,15 @@ public class ProcessSave implements Process {
 
     private void doWriteStage() {
         final String stage = "TRACK";
+        final long startTime = System.currentTimeMillis();
+
         player.sendMessage(getStageBeginText(stage));
         TrackExchangeTrack trackExchangeTrack = chain.getTaskData("track");
         TrackExchangeSchematic trackExchangeSchematic = chain.getTaskData("schematic");
         TrackExchangeFile trackExchangeFile = new TrackExchangeFile(trackExchangeTrack, new SimpleLocation(origin), trackExchangeSchematic);
         try {
             trackExchangeFile.write(new File(TrackExchange.instance.getDataFolder(), saveAs));
-            player.sendMessage(getStageFinishText(stage));
+            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
         } catch (IOException e) {
             player.sendMessage(getStageFinishExceptionallyText(stage, e));
         }
