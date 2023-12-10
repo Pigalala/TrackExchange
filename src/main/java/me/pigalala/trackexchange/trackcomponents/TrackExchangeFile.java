@@ -8,7 +8,6 @@ import lombok.Getter;
 import me.pigalala.trackexchange.TrackExchange;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.nio.file.*;
@@ -38,11 +37,11 @@ public class TrackExchangeFile {
     public void write(File dir) throws IOException {
         dir.mkdir();
 
-        File dataFile = new File(dir, "data.trackexchange");
+        File dataFile = new File(dir, "data.component");
         dataFile.createNewFile();
-        File trackFile = new File(dir, "track.trackexchange");
+        File trackFile = new File(dir, "track.component");
         trackFile.createNewFile();
-        File schematicFile = new File(dir, "schematic.trackexchange");
+        File schematicFile = new File(dir, "schematic.component");
         schematicFile.createNewFile();
 
         JSONObject data = new JSONObject();
@@ -73,11 +72,11 @@ public class TrackExchangeFile {
     }
 
     public static TrackExchangeFile read(File trackDir, String newName) throws Exception {
-        unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName() + ".zip"), TrackExchange.instance.getDataFolder());
+        unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName() + ".trackexchange"), TrackExchange.instance.getDataFolder());
 
-        File dataFile = new File(TrackExchange.instance.getDataFolder(), "data.trackexchange");
-        File trackFile = new File(TrackExchange.instance.getDataFolder(), "track.trackexchange");
-        File schematicFile = new File(TrackExchange.instance.getDataFolder(), "schematic.trackexchange");
+        File dataFile = new File(TrackExchange.instance.getDataFolder(), "data.component");
+        File trackFile = new File(TrackExchange.instance.getDataFolder(), "track.component");
+        File schematicFile = new File(TrackExchange.instance.getDataFolder(), "schematic.component");
 
         SimpleLocation clipboardOffset;
         try (FileReader reader = new FileReader(dataFile)) {
@@ -112,7 +111,7 @@ public class TrackExchangeFile {
     }
 
     private static void zipDir(File dir) throws IOException {
-        try(ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(dir.getPath() + ".zip"))) {
+        try(ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(dir.getPath() + ".trackexchange"))) {
             Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
@@ -157,13 +156,13 @@ public class TrackExchangeFile {
     }
 
     public static boolean trackExchangeFileAlreadyExists(String fileName) {
-        File f = new File(TrackExchange.instance.getDataFolder(), fileName + ".zip");
+        File f = new File(TrackExchange.instance.getDataFolder(), fileName + ".trackexchange");
         return f.exists();
     }
 
     public static void cleanup() {
-        new File(TrackExchange.instance.getDataFolder(), "data.trackexchange").delete();
-        new File(TrackExchange.instance.getDataFolder(), "track.trackexchange").delete();
-        new File(TrackExchange.instance.getDataFolder(), "schematic.trackexchange").delete();
+        new File(TrackExchange.instance.getDataFolder(), "data.component").delete();
+        new File(TrackExchange.instance.getDataFolder(), "track.component").delete();
+        new File(TrackExchange.instance.getDataFolder(), "schematic.component").delete();
     }
 }

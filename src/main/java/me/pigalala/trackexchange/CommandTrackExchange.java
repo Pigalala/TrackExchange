@@ -30,7 +30,7 @@ public class CommandTrackExchange extends BaseCommand {
     @CommandCompletion("<filename> <loadas>")
     @CommandPermission("trackexchange.import")
     public static void onPaste(Player player, String fileName, @Optional String loadAs) {
-        fileName = fileName.replace(".zip", "");
+        fileName = fileName.replace(".trackexchange", "");
         if(loadAs == null)
             loadAs = fileName;
 
