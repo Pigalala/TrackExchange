@@ -1,8 +1,10 @@
 # TrackExchange
+⚠️ **This plugin is in an experimental state and should be used with caution.**
+***
 
 TrackExchange is an addon for [TimingSystem](https://github.com/Makkuusen/TimingSystem) which allows you to copy and paste tracks.
 
-These copied tracks are saved as .zip files and can be transferred between servers if needed.
+These copied tracks are saved as `.trackexchange` files and can be transferred between servers if needed.
 
 ## How to use
 
@@ -16,6 +18,3 @@ Currently, there are two commands in Trackexchange:
 _You are not required to use a WorldEdit selection when copying tracks._
 
 `/trackexchange paste <filename> [loadas]` which pastes a track from a file `<filename>` and loads it with the name `[loadas]` if provided, otherwise it takes the name from `<filename>`. This has the permission node `trackexchange.import`.
-
-
-⚠️ This plugin is in an experimental state and should be used with caution.
