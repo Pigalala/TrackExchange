@@ -3,9 +3,10 @@ package me.pigalala.trackexchange.trackcomponents;
 import me.makkuusen.timing.system.TrackTagManager;
 import me.makkuusen.timing.system.track.TrackTag;
 
+import java.io.Serializable;
 import java.util.Optional;
 
-public class TrackExchangeTag {
+public class TrackExchangeTag implements Serializable {
 
     private final String value;
 
