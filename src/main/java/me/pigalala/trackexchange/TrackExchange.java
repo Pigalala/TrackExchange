@@ -15,7 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Optional;
 
 public final class TrackExchange extends JavaPlugin {
-    public static final int TRACK_VERSION = 1;
+    public static final int TRACK_VERSION = 2;
 
     public static TrackExchange instance;
     private static TaskChainFactory taskChainFactory;

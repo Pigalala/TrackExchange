@@ -31,6 +31,8 @@ public interface Process {
     }
 
     default Component getStageFinishExceptionallyText(String stage, Throwable cause) {
-        return Component.text("Stage '" + stage + "' completed exceptionally.", NamedTextColor.RED).hoverEvent(Component.text(cause.getMessage(), NamedTextColor.RED));
+        cause.printStackTrace();
+        String info = cause.getMessage();
+        return Component.text("Stage '" + stage + "' completed exceptionally.", NamedTextColor.RED).hoverEvent(Component.text(info == null ? "No info." : info, NamedTextColor.RED));
     }
 }

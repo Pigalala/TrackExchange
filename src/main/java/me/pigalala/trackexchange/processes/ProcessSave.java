@@ -74,8 +74,6 @@ public class ProcessSave implements Process {
         player.sendMessage(getStageBeginText(stage));
         try {
             Region r = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(player)).getSelection();
-            if(r == null)
-                return;
             BlockArrayClipboard clipboard = new BlockArrayClipboard(r);
             Operations.complete(new ForwardExtentCopy(BukkitAdapter.adapt(player.getWorld()), r, clipboard, r.getMinimumPoint()));
             chain.setTaskData("schematic", new TrackExchangeSchematic(clipboard));
@@ -85,6 +83,7 @@ public class ProcessSave implements Process {
                 player.sendMessage(Component.text("Saving without Schematic.", NamedTextColor.YELLOW));
             else
                 player.sendMessage(Component.text("Saving without Schematic...", NamedTextColor.YELLOW).hoverEvent(Component.text(e.getMessage(), NamedTextColor.RED)));
+            chain.setTaskData("schematic", null);
         }
     }
 
