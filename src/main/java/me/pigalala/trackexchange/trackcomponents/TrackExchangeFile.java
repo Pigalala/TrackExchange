@@ -4,6 +4,7 @@ import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
+import com.sk89q.worldedit.math.BlockVector3;
 import lombok.Getter;
 import me.pigalala.trackexchange.TrackExchange;
 import org.json.simple.JSONObject;
@@ -38,31 +39,30 @@ public class TrackExchangeFile {
         dir.mkdir();
 
         File dataFile = new File(dir, "data.component");
-        dataFile.createNewFile();
         File trackFile = new File(dir, "track.component");
-        trackFile.createNewFile();
         File schematicFile = new File(dir, "schematic.component");
-        schematicFile.createNewFile();
 
         JSONObject data = new JSONObject();
         data.put("version", TrackExchange.TRACK_VERSION);
         if(getSchematic().isPresent())
             data.put("clipboardOffset", new SimpleLocation(SimpleLocation.getOffset(getSchematic().get().getClipboard().getOrigin(), origin.toBlockVector3())).toJson());
+
+        dataFile.createNewFile();
         try (FileWriter writer = new FileWriter(dataFile)) {
             writer.write(data.toJSONString());
         }
 
+        trackFile.createNewFile();
         try(FileOutputStream fileOut = new FileOutputStream(trackFile); ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
             out.writeObject(track);
         }
 
-        getSchematic().ifPresent(schem -> {
+        if(getSchematic().isPresent()) {
+            schematicFile.createNewFile();
             try(ClipboardWriter clipboardWriter = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(new FileOutputStream(schematicFile))) {
-                clipboardWriter.write(schem.getClipboard());
-            } catch (IOException e) {
-                e.printStackTrace();
+                clipboardWriter.write(getSchematic().get().getClipboard());
             }
-        });
+        }
 
         zipDir(dir);
         dataFile.delete();
@@ -78,14 +78,17 @@ public class TrackExchangeFile {
         File trackFile = new File(TrackExchange.instance.getDataFolder(), "track.component");
         File schematicFile = new File(TrackExchange.instance.getDataFolder(), "schematic.component");
 
-        SimpleLocation clipboardOffset;
+        SimpleLocation clipboardOffset = new SimpleLocation(BlockVector3.at(0, 0, 0));
         try (FileReader reader = new FileReader(dataFile)) {
             JSONParser parser = new JSONParser();
             JSONObject data = (JSONObject) parser.parse(reader);
             int version = Integer.parseInt(String.valueOf(data.get("version")));
             if(version != TrackExchange.TRACK_VERSION)
                 throw new RuntimeException("This track's version does not match the server's version. (Track: " + version + ". Server: " + TrackExchange.TRACK_VERSION + ")");
-            clipboardOffset = SimpleLocation.fromJson((JSONObject) data.get("clipboardOffset"));
+
+            JSONObject clipboardOffsetObject = (JSONObject) data.get("clipboardOffset");
+            if(clipboardOffsetObject != null)
+                clipboardOffset = SimpleLocation.fromJson(clipboardOffsetObject);
         }
 
         TrackExchangeTrack trackExchangeTrack;
