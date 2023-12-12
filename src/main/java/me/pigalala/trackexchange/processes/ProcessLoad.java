@@ -12,9 +12,8 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.sql.SQLException;
 
-public class ProcessLoad implements Process {
+public class ProcessLoad extends Process {
 
-    private final Player player;
     private final String fileName;
     private final String loadAs;
 
@@ -22,7 +21,7 @@ public class ProcessLoad implements Process {
     private final Location origin;
 
     public ProcessLoad(Player player, String fileName, String loadAs) {
-        this.player = player;
+        super(player, "LOAD");
         this.fileName = fileName;
         this.loadAs = loadAs;
 
@@ -34,15 +33,15 @@ public class ProcessLoad implements Process {
     public void execute() {
         final long startTime = System.currentTimeMillis();
 
-        player.sendMessage(getProcessStartText());
+        notifyProcessStartText();
         chain.async(this::doReadStage)
                 .async(this::doTrackStage)
                 .async(this::doPasteStage)
                 .execute((success) -> {
                     if (success)
-                        player.sendMessage(getProcessFinishText(System.currentTimeMillis() - startTime));
+                        notifyProcessFinishText(System.currentTimeMillis() - startTime);
                     else
-                        player.sendMessage(getProcessFinishExceptionallyText());
+                        notifyProcessFinishExceptionallyText();
                     TrackExchangeFile.cleanup();
                 }
         );
@@ -52,13 +51,13 @@ public class ProcessLoad implements Process {
         final String stage = "READ";
         final long startTime = System.currentTimeMillis();
 
-        player.sendMessage(getStageBeginText(stage));
+        notifyStageBeginText(stage);
         try {
             TrackExchangeFile trackExchangeFile = TrackExchangeFile.read(new File(TrackExchange.instance.getDataFolder(), fileName), loadAs);
             chain.setTaskData("trackExchangeFile", trackExchangeFile);
-            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
+            notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (Exception e) {
-            player.sendMessage(getStageFinishExceptionallyText(stage, e));
+            notifyStageFinishExceptionallyText(stage, e);
             chain.abortChain();
         }
     }
@@ -67,13 +66,13 @@ public class ProcessLoad implements Process {
         final String stage = "TRACK";
         final long startTime = System.currentTimeMillis();
 
-        player.sendMessage(getStageBeginText(stage));
+        notifyStageBeginText(stage);
         TrackExchangeFile trackExchangeFile = chain.getTaskData("trackExchangeFile");
         try {
             trackExchangeFile.getTrack().createTrack(player);
-            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
+            notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (SQLException e) {
-            player.sendMessage(getStageFinishExceptionallyText(stage, e));
+            notifyStageFinishExceptionallyText(stage, e);
             chain.abortChain();
         }
     }
@@ -84,20 +83,15 @@ public class ProcessLoad implements Process {
 
         TrackExchangeFile trackExchangeFile = chain.getTaskData("trackExchangeFile");
         trackExchangeFile.getSchematic().ifPresentOrElse(schematic -> {
-            player.sendMessage(getStageBeginText(stage));
+            notifyStageBeginText(stage);
             try {
                 schematic.pasteAt(origin);
-                player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
+                notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
             } catch (WorldEditException e) {
-                player.sendMessage(getStageFinishExceptionallyText(stage, e));
+                notifyStageFinishExceptionallyText(stage, e);
             }
         }, () -> {
-            player.sendMessage(Component.text("Skipping stage '" + stage + "'.", NamedTextColor.YELLOW));
+            notifyPlayer(Component.text("Skipping stage '" + stage + "'.", NamedTextColor.YELLOW));
         });
-    }
-
-    @Override
-    public String processName() {
-        return "LOAD";
     }
 }
