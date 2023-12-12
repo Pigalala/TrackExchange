@@ -6,7 +6,7 @@
 
   <groupId>me.pigalala</groupId>
   <artifactId>TrackExchange</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0-SNAPSHOT-A</version>
   <packaging>jar</packaging>
 
   <name>TrackExchange</name>
