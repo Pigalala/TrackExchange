@@ -11,6 +11,8 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class ProcessLoad extends Process {
 
@@ -32,11 +34,10 @@ public class ProcessLoad extends Process {
     @Override
     public void execute() {
         final long startTime = System.currentTimeMillis();
-
         notifyProcessStartText();
+
         chain.async(this::doReadStage)
-                .async(this::doTrackStage)
-                .async(this::doPasteStage)
+                .asyncFutures((f) -> List.of(CompletableFuture.supplyAsync(this::doTrackStage), CompletableFuture.supplyAsync(this::doPasteStage)))
                 .execute((success) -> {
                     if (success)
                         notifyProcessFinishText(System.currentTimeMillis() - startTime);
@@ -62,7 +63,7 @@ public class ProcessLoad extends Process {
         }
     }
 
-    private void doTrackStage() {
+    private Void doTrackStage() {
         final String stage = "TRACK";
         final long startTime = System.currentTimeMillis();
 
@@ -75,9 +76,11 @@ public class ProcessLoad extends Process {
             notifyStageFinishExceptionallyText(stage, e);
             chain.abortChain();
         }
+
+        return null;
     }
 
-    private void doPasteStage() {
+    private Void doPasteStage() {
         final String stage = "PASTE";
         final long startTime = System.currentTimeMillis();
 
@@ -93,5 +96,7 @@ public class ProcessLoad extends Process {
         }, () -> {
             notifyPlayer(Component.text("Skipping stage '" + stage + "'.", NamedTextColor.YELLOW));
         });
+
+        return null;
     }
 }

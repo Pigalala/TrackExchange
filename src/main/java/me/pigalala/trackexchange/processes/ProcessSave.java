@@ -22,6 +22,8 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class ProcessSave extends Process {
 
@@ -45,8 +47,7 @@ public class ProcessSave extends Process {
         final long startTime = System.currentTimeMillis();
         notifyProcessStartText();
 
-        chain.async(this::doTrackStage)
-                .async(this::doSchematicStage)
+        chain.asyncFutures((f) -> List.of(CompletableFuture.supplyAsync(this::doTrackStage), CompletableFuture.supplyAsync(this::doSchematicStage)))
                 .async(this::doWriteStage)
                 .execute((success) -> {
                     if(success)
@@ -56,7 +57,7 @@ public class ProcessSave extends Process {
                 });
     }
 
-    private void doTrackStage() {
+    private Void doTrackStage() {
         final String stage = "TRACK";
         final long startTime = System.currentTimeMillis();
 
@@ -64,9 +65,11 @@ public class ProcessSave extends Process {
         TrackExchangeTrack trackExchangeTrack = new TrackExchangeTrack(track, new SimpleLocation(origin));
         chain.setTaskData("track", trackExchangeTrack);
         notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
+
+        return null;
     }
 
-    private void doSchematicStage() {
+    private Void doSchematicStage() {
         final String stage = "SCHEMATIC";
         final long startTime = System.currentTimeMillis();
 
@@ -84,6 +87,8 @@ public class ProcessSave extends Process {
                 notifyPlayer(Component.text("Saving without Schematic...", NamedTextColor.YELLOW).hoverEvent(Component.text(e.getMessage(), NamedTextColor.RED)));
             chain.setTaskData("schematic", null);
         }
+
+        return null;
     }
 
     private void doWriteStage() {
