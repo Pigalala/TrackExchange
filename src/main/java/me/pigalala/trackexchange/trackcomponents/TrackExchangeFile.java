@@ -59,9 +59,7 @@ public class TrackExchangeFile {
 
         if(getSchematic().isPresent()) {
             schematicFile.createNewFile();
-            try(ClipboardWriter clipboardWriter = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(new FileOutputStream(schematicFile))) {
-                clipboardWriter.write(getSchematic().get().getClipboard());
-            }
+            schematic.saveTo(schematicFile);
         }
 
         zipDir(dir);
