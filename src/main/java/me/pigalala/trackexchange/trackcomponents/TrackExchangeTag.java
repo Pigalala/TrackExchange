@@ -1,7 +1,7 @@
 package me.pigalala.trackexchange.trackcomponents;
 
 import me.makkuusen.timing.system.TrackTagManager;
-import me.makkuusen.timing.system.track.TrackTag;
+import me.makkuusen.timing.system.track.tags.TrackTag;
 
 import java.io.Serializable;
 import java.util.Optional;

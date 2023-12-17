@@ -6,7 +6,7 @@
 
   <groupId>me.pigalala</groupId>
   <artifactId>TrackExchange</artifactId>
-  <version>0.2.0-SNAPSHOT-B</version>
+  <version>0.2.0-SNAPSHOT-C</version>
   <packaging>jar</packaging>
 
   <name>TrackExchange</name>
@@ -94,7 +94,7 @@
     <dependency>
       <groupId>com.github.Makkuusen</groupId>
       <artifactId>TimingSystem</artifactId>
-      <version>1.9</version>
+      <version>d08a1f3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
