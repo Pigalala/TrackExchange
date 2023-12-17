@@ -1,8 +1,8 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.track.Track;
-import me.makkuusen.timing.system.track.TrackDatabase;
-import me.makkuusen.timing.system.track.TrackLocation;
+import me.makkuusen.timing.system.track.locations.TrackLocation;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
@@ -20,10 +20,6 @@ public class TrackExchangeLocation implements Serializable {
         index = trackLocation.getIndex();
         location = new SimpleLocation(trackLocation.getLocation());
         type = trackLocation.getLocationType().toString();
-    }
-
-    public Location getLocation(World world) {
-        return location.toLocation(world);
     }
 
     public TrackLocation.Type getType() {

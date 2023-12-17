@@ -8,7 +8,7 @@ authors: [Pigalala]
 
 commands:
   trackexchange:
-    aliases: [te]
+    aliases: [tex, tx]
 
 permissions:
   trackexchange.export:
