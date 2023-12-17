@@ -69,7 +69,7 @@ public class TrackExchangeFile {
     }
 
     public static TrackExchangeFile read(File trackDir, String newName) throws Exception {
-        unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName() + ".trackexchange"), TrackExchange.instance.getDataFolder());
+        unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName().toLowerCase() + ".trackexchange"), TrackExchange.instance.getDataFolder());
 
         File dataFile = new File(TrackExchange.instance.getDataFolder(), "data.component");
         File trackFile = new File(TrackExchange.instance.getDataFolder(), "track.component");
@@ -158,7 +158,7 @@ public class TrackExchangeFile {
     }
 
     public static boolean trackExchangeFileAlreadyExists(String fileName) {
-        File f = new File(TrackExchange.instance.getDataFolder(), fileName + ".trackexchange");
+        File f = new File(TrackExchange.instance.getDataFolder(), fileName.toLowerCase() + ".trackexchange");
         return f.exists();
     }
 

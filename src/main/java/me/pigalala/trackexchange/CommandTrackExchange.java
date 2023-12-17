@@ -20,6 +20,7 @@ public class CommandTrackExchange extends BaseCommand {
     public static void onCopy(Player player, Track track, @Optional @Single String saveAs) {
         if(saveAs == null)
             saveAs = track.getCommandName();
+        saveAs = saveAs.toLowerCase();
 
         if(TrackExchangeFile.trackExchangeFileAlreadyExists(saveAs))
             throw new ConditionFailedException("This trackexchange file already exists");
@@ -34,7 +35,7 @@ public class CommandTrackExchange extends BaseCommand {
     @CommandCompletion("<filename> <loadas>")
     @CommandPermission("trackexchange.import")
     public static void onPaste(Player player, String fileName, @Optional String loadAs) {
-        fileName = fileName.replace(".trackexchange", "");
+        fileName = fileName.replace(".trackexchange", "").toLowerCase();
         if(loadAs == null)
             loadAs = fileName;
 
