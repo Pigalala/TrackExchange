@@ -8,14 +8,14 @@ import co.aikar.taskchain.BukkitTaskChainFactory;
 import co.aikar.taskchain.TaskChain;
 import co.aikar.taskchain.TaskChainFactory;
 import me.makkuusen.timing.system.api.TimingSystemAPI;
+import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.track.Track;
-import me.makkuusen.timing.system.track.TrackDatabase;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Optional;
 
 public final class TrackExchange extends JavaPlugin {
-    public static final int TRACK_VERSION = 2;
+    public static final int TRACK_VERSION = 3;
 
     public static TrackExchange instance;
     private static TaskChainFactory taskChainFactory;

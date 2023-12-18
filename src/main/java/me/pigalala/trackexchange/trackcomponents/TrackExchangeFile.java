@@ -3,7 +3,6 @@ package me.pigalala.trackexchange.trackcomponents;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
 import com.sk89q.worldedit.math.BlockVector3;
 import lombok.Getter;
 import me.pigalala.trackexchange.TrackExchange;
@@ -59,9 +58,7 @@ public class TrackExchangeFile {
 
         if(getSchematic().isPresent()) {
             schematicFile.createNewFile();
-            try(ClipboardWriter clipboardWriter = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(new FileOutputStream(schematicFile))) {
-                clipboardWriter.write(getSchematic().get().getClipboard());
-            }
+            schematic.saveTo(schematicFile);
         }
 
         zipDir(dir);
@@ -72,7 +69,7 @@ public class TrackExchangeFile {
     }
 
     public static TrackExchangeFile read(File trackDir, String newName) throws Exception {
-        unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName() + ".trackexchange"), TrackExchange.instance.getDataFolder());
+        unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName().toLowerCase() + ".trackexchange"), TrackExchange.instance.getDataFolder());
 
         File dataFile = new File(TrackExchange.instance.getDataFolder(), "data.component");
         File trackFile = new File(TrackExchange.instance.getDataFolder(), "track.component");
@@ -161,7 +158,7 @@ public class TrackExchangeFile {
     }
 
     public static boolean trackExchangeFileAlreadyExists(String fileName) {
-        File f = new File(TrackExchange.instance.getDataFolder(), fileName + ".trackexchange");
+        File f = new File(TrackExchange.instance.getDataFolder(), fileName.toLowerCase() + ".trackexchange");
         return f.exists();
     }
 

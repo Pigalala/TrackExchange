@@ -3,12 +3,17 @@ package me.pigalala.trackexchange.trackcomponents;
 import lombok.Getter;
 import lombok.Setter;
 import me.makkuusen.timing.system.ApiUtilities;
-import me.makkuusen.timing.system.Database;
-import me.makkuusen.timing.system.TPlayer;
+import me.makkuusen.timing.system.TimingSystem;
 import me.makkuusen.timing.system.api.TimingSystemAPI;
+import me.makkuusen.timing.system.boatutils.BoatUtilsMode;
+import me.makkuusen.timing.system.database.TSDatabase;
+import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.idb.DB;
 import me.makkuusen.timing.system.idb.DbRow;
-import me.makkuusen.timing.system.track.*;
+import me.makkuusen.timing.system.tplayer.TPlayer;
+import me.makkuusen.timing.system.track.Track;
+import me.makkuusen.timing.system.track.locations.TrackLeaderboard;
+import me.makkuusen.timing.system.track.regions.TrackRegion;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -17,7 +22,6 @@ import org.bukkit.util.Vector;
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,14 +37,13 @@ public class TrackExchangeTrack implements Serializable {
     private final String guiItem;
     private final int weight;
     private final String trackType;
-    private final String trackMode;
     private final short boatUtilsMode;
 
     private final List<UUID> contributors;
     private final List<TrackExchangeRegion> regions;
     private final List<TrackExchangeLocation> locations;
     private final List<TrackExchangeTag> tags;
-    private final List<Character> options;
+    private final List<TrackExchangeOption> options;
 
     private final SimpleLocation spawnLocation;
     private final SimpleLocation origin;
@@ -49,21 +52,16 @@ public class TrackExchangeTrack implements Serializable {
         displayName = track.getDisplayName();
         owner = track.getOwner().getUniqueId();
         dateCreated = track.getDateCreated();
-        guiItem = ApiUtilities.itemToString(track.getGuiItem());
+        guiItem = ApiUtilities.itemToString(track.getItem());
         weight = track.getWeight();
         trackType = track.getType().toString();
-        trackMode = track.getMode().toString();
         boatUtilsMode = track.getBoatUtilsMode().getId();
 
         contributors = track.getContributors().stream().map(TPlayer::getUniqueId).toList();
-        regions = track.getRegions().stream().map(TrackExchangeRegion::new).toList();
-        locations = track.getTrackLocations().stream().map(TrackExchangeLocation::new).toList();
-        tags = track.getTags().stream().map(TrackExchangeTag::new).toList();
-
-        options = new ArrayList<>();
-        for (char option : track.getOptions()) {
-            options.add(option);
-        }
+        regions = track.getTrackRegions().getRegions().stream().map(TrackExchangeRegion::new).toList();
+        locations = track.getTrackLocations().getLocations().stream().map(TrackExchangeLocation::new).toList();
+        tags = track.getTrackTags().get().stream().map(TrackExchangeTag::new).toList();
+        options = track.getTrackOptions().getTrackOptions().stream().map(TrackExchangeOption::new).toList();
 
         spawnLocation = new SimpleLocation(track.getSpawnLocation());
         this.origin = origin;
@@ -78,21 +76,19 @@ public class TrackExchangeTrack implements Serializable {
         Vector offset = SimpleLocation.getOffset(origin.toLocation(world).toBlockLocation(), playerPasting.getLocation().toBlockLocation());
         Location newSpawnLocation = spawnLocation.toLocation(world).subtract(offset);
 
-        long trackId = DB.executeInsert("INSERT INTO `ts_tracks` " +
-                "(`uuid`, `name`, `dateCreated`, `weight`, `guiItem`, `spawn`, `leaderboard`, `type`, `mode`, `toggleOpen`, `options`, `boatUtilsMode`, `isRemoved`) " +
-                "VALUES('" + owner.getUniqueId() + "', " + Database.sqlString(displayName) + ", " + dateCreated + ", " + weight + ", " + Database.sqlString(guiItem) + ", '" + ApiUtilities.locationToString(newSpawnLocation) + "', '" + ApiUtilities.locationToString(newSpawnLocation) + "', " + Database.sqlString(trackType) + "," + Database.sqlString(trackMode) + ", 0, NULL, " + boatUtilsMode + " , 0);");
+        var trackId = TimingSystem.getTrackDatabase().createTrack(owner.getUniqueId().toString(), displayName, dateCreated, weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
         DbRow dbRow = DB.getFirstRow("SELECT * FROM `ts_tracks` WHERE `id` = " + trackId + ";");
         Track track = new Track(dbRow);
-        TrackDatabase.getTracks().add(track);
+        TrackDatabase.tracks.add(track);
 
         regions.stream().map(region -> region.toTrackRegion(track, world, offset)).forEach(trackRegion -> {
-            track.addRegion(trackRegion);
+            track.getTrackRegions().add(trackRegion);
             if(trackRegion.getRegionType() == TrackRegion.RegionType.START)
                 TrackDatabase.addTrackRegion(trackRegion);
         });
 
         locations.stream().map(loc -> loc.toTrackLocation(track, world, offset)).forEach(location -> {
-            track.addTrackLocation(location);
+            track.getTrackLocations().add(location);
             if(location instanceof TrackLeaderboard leaderboard)
                 leaderboard.createOrUpdateHologram();
         });
@@ -100,20 +96,19 @@ public class TrackExchangeTrack implements Serializable {
         tags.stream().map(TrackExchangeTag::toTrackTag).forEach(_trackTag -> {
             if(_trackTag.isEmpty())
                 return;
-            track.createTag(_trackTag.get());
+            track.getTrackTags().create(_trackTag.get());
         });
 
         contributors.forEach(uuid -> {
-            TPlayer contributor = Database.getPlayer(uuid);
+            TPlayer contributor = TSDatabase.getPlayer(uuid);
             if(contributor == null)
                 return;
             track.addContributor(contributor);
         });
 
-        String newOptions = "";
-        for(char c : options)
-            newOptions = newOptions.concat(String.valueOf(c));
-        track.setOptions(newOptions);
+        options.stream().map(TrackExchangeOption::toTrackOption).forEach(option -> {
+            track.getTrackOptions().add(option);
+        });
 
         return track;
     }

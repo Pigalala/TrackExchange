@@ -22,10 +22,11 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-public class ProcessSave implements Process {
+public class ProcessSave extends Process {
 
-    private final Player player;
     private final Track track;
     private final String saveAs;
 
@@ -33,7 +34,7 @@ public class ProcessSave implements Process {
     private final Location origin;
 
     public ProcessSave(Player player, Track track, String saveAs) {
-        this.player = player;
+        super(player, "SAVE");
         this.track = track;
         this.saveAs = saveAs;
 
@@ -44,67 +45,66 @@ public class ProcessSave implements Process {
     @Override
     public void execute() {
         final long startTime = System.currentTimeMillis();
-        player.sendMessage(getProcessStartText());
+        notifyProcessStartText();
 
-        chain.async(this::doTrackStage)
-                .async(this::doSchematicStage)
+        chain.asyncFutures((f) -> List.of(CompletableFuture.supplyAsync(this::doTrackStage), CompletableFuture.supplyAsync(this::doSchematicStage)))
                 .async(this::doWriteStage)
                 .execute((success) -> {
                     if(success)
-                        player.sendMessage(getProcessFinishText(System.currentTimeMillis() - startTime));
+                        notifyProcessFinishText(System.currentTimeMillis() - startTime);
                     else
-                        player.sendMessage(getProcessFinishExceptionallyText());
+                        notifyProcessFinishExceptionallyText();
                 });
     }
 
-    private void doTrackStage() {
+    private Void doTrackStage() {
         final String stage = "TRACK";
         final long startTime = System.currentTimeMillis();
 
-        player.sendMessage(getStageBeginText(stage));
+        notifyStageBeginText(stage);
         TrackExchangeTrack trackExchangeTrack = new TrackExchangeTrack(track, new SimpleLocation(origin));
         chain.setTaskData("track", trackExchangeTrack);
-        player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
+        notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
+
+        return null;
     }
 
-    private void doSchematicStage() {
+    private Void doSchematicStage() {
         final String stage = "SCHEMATIC";
         final long startTime = System.currentTimeMillis();
 
-        player.sendMessage(getStageBeginText(stage));
+        notifyStageBeginText(stage);
         try {
             Region r = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(player)).getSelection();
             BlockArrayClipboard clipboard = new BlockArrayClipboard(r);
             Operations.complete(new ForwardExtentCopy(BukkitAdapter.adapt(player.getWorld()), r, clipboard, r.getMinimumPoint()));
             chain.setTaskData("schematic", new TrackExchangeSchematic(clipboard));
-            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
+            notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (WorldEditException e) {
             if(e instanceof IncompleteRegionException)
-                player.sendMessage(Component.text("Saving without Schematic.", NamedTextColor.YELLOW));
+                notifyPlayer(Component.text("Saving without Schematic.", NamedTextColor.YELLOW));
             else
-                player.sendMessage(Component.text("Saving without Schematic...", NamedTextColor.YELLOW).hoverEvent(Component.text(e.getMessage(), NamedTextColor.RED)));
+                notifyPlayer(Component.text("Saving without Schematic...", NamedTextColor.YELLOW).hoverEvent(Component.text(e.getMessage(), NamedTextColor.RED)));
             chain.setTaskData("schematic", null);
         }
+
+        return null;
     }
 
     private void doWriteStage() {
         final String stage = "WRITE";
         final long startTime = System.currentTimeMillis();
 
-        player.sendMessage(getStageBeginText(stage));
+        notifyStageBeginText(stage);
         TrackExchangeTrack trackExchangeTrack = chain.getTaskData("track");
         TrackExchangeSchematic trackExchangeSchematic = chain.getTaskData("schematic");
         TrackExchangeFile trackExchangeFile = new TrackExchangeFile(trackExchangeTrack, new SimpleLocation(origin), trackExchangeSchematic);
         try {
             trackExchangeFile.write(new File(TrackExchange.instance.getDataFolder(), saveAs));
-            player.sendMessage(getStageFinishText(stage, System.currentTimeMillis() - startTime));
+            notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (IOException e) {
-            player.sendMessage(getStageFinishExceptionallyText(stage, e));
+            notifyStageFinishExceptionallyText(stage, e);
+            notifyStageFinishExceptionallyText(stage, e);
         }
-    }
-
-    @Override
-    public String processName() {
-        return "SAVE";
     }
 }
