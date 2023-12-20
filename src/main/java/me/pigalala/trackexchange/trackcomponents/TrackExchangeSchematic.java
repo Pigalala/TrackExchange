@@ -26,9 +26,7 @@ public class TrackExchangeSchematic {
     }
 
     public void saveTo(File file) throws IOException {
-        try (FileOutputStream outputStream = new FileOutputStream(file); ClipboardWriter writer = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(outputStream)) {
-            writer.write(clipboard);
-        }
+        clipboard.save(file, BuiltInClipboardFormat.FAST);
     }
 
     public void pasteAt(Location location) throws WorldEditException {

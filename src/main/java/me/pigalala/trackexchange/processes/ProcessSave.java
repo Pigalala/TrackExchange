@@ -1,12 +1,13 @@
 package me.pigalala.trackexchange.processes;
 
 import co.aikar.taskchain.TaskChain;
-import com.sk89q.worldedit.IncompleteRegionException;
-import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.WorldEditException;
+import com.fastasyncworldedit.core.Fawe;
+import com.fastasyncworldedit.core.FaweAPI;
+import com.sk89q.worldedit.*;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
+import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.regions.Region;
 import me.makkuusen.timing.system.track.Track;
@@ -17,6 +18,7 @@ import me.pigalala.trackexchange.trackcomponents.TrackExchangeTrack;
 import me.pigalala.trackexchange.trackcomponents.SimpleLocation;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -75,9 +77,13 @@ public class ProcessSave extends Process {
 
         notifyStageBeginText(stage);
         try {
-            Region r = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(player)).getSelection();
-            BlockArrayClipboard clipboard = new BlockArrayClipboard(r);
-            Operations.complete(new ForwardExtentCopy(BukkitAdapter.adapt(player.getWorld()), r, clipboard, r.getMinimumPoint()));
+            Region selection = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(player)).getSelection();
+            BlockArrayClipboard clipboard = new BlockArrayClipboard(selection);
+            try(EditSession session = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(player.getWorld()))) {
+                ForwardExtentCopy op = new ForwardExtentCopy(session, selection, clipboard, selection.getMinimumPoint());
+                op.setCopyingEntities(true);
+                Operations.complete(op);
+            }
             chain.setTaskData("schematic", new TrackExchangeSchematic(clipboard));
             notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (WorldEditException e) {
