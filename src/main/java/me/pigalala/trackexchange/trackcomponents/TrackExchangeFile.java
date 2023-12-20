@@ -12,6 +12,7 @@ import org.json.simple.parser.JSONParser;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
@@ -62,14 +63,11 @@ public class TrackExchangeFile {
         }
 
         zipDir(dir);
-        dataFile.delete();
-        trackFile.delete();
-        schematicFile.delete();
-        dir.delete();
+        cleanup(dir);
     }
 
     public static TrackExchangeFile read(File trackDir, String newName) throws Exception {
-        unzipDir(new File(TrackExchange.instance.getDataFolder(), trackDir.getName().toLowerCase() + ".trackexchange"), TrackExchange.instance.getDataFolder());
+        unzipDir(findFile(trackDir.getName() + ".trackexchange", TrackExchange.instance.getDataFolder()), TrackExchange.instance.getDataFolder());
 
         File dataFile = new File(TrackExchange.instance.getDataFolder(), "data.component");
         File trackFile = new File(TrackExchange.instance.getDataFolder(), "track.component");
@@ -104,11 +102,7 @@ public class TrackExchangeFile {
             }
         }
 
-        trackFile.delete();
-        dataFile.delete();
-        schematicFile.delete();
-        trackDir.delete();
-
+        cleanup(trackDir);
         return new TrackExchangeFile(trackExchangeTrack, trackExchangeTrack.getOrigin(), trackExchangeSchematic);
     }
 
@@ -157,12 +151,29 @@ public class TrackExchangeFile {
         }
     }
 
-    public static boolean trackExchangeFileAlreadyExists(String fileName) {
-        File f = new File(TrackExchange.instance.getDataFolder(), fileName.toLowerCase() + ".trackexchange");
-        return f.exists();
+    // Check to see if file 'find' is in 'dir' when the file name cases do not match.
+    private static File findFile(String find, File dir) {
+        File[] files = dir.listFiles();
+        if(files == null)
+            return null;
+
+        for(File file : files) {
+            if(find.equalsIgnoreCase(file.getName()))
+                return file;
+        }
+
+        return null;
     }
 
-    public static void cleanup() {
+    public static boolean trackExchangeFileExists(String fileName) {
+        File f = findFile(fileName + ".trackexchange", TrackExchange.instance.getDataFolder());
+        return f != null && f.exists();
+    }
+
+    public static void cleanup(File dir) {
+        if(dir.listFiles() != null)
+            Arrays.stream(dir.listFiles()).forEach(File::delete);
+        dir.delete();
         new File(TrackExchange.instance.getDataFolder(), "data.component").delete();
         new File(TrackExchange.instance.getDataFolder(), "track.component").delete();
         new File(TrackExchange.instance.getDataFolder(), "schematic.component").delete();

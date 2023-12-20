@@ -20,9 +20,8 @@ public class CommandTrackExchange extends BaseCommand {
     public static void onCopy(Player player, Track track, @Optional @Single String saveAs) {
         if(saveAs == null)
             saveAs = track.getCommandName();
-        saveAs = saveAs.toLowerCase();
 
-        if(TrackExchangeFile.trackExchangeFileAlreadyExists(saveAs))
+        if(TrackExchangeFile.trackExchangeFileExists(saveAs))
             throw new ConditionFailedException("This trackexchange file already exists");
 
         if(!saveAs.matches("[A-Za-z0-9_]+"))
@@ -38,6 +37,9 @@ public class CommandTrackExchange extends BaseCommand {
         fileName = fileName.replace(".trackexchange", "").toLowerCase();
         if(loadAs == null)
             loadAs = fileName;
+
+        if(!TrackExchangeFile.trackExchangeFileExists(fileName))
+            throw new ConditionFailedException("This trackexchange file does not exist");
 
         if(TrackDatabase.trackNameNotAvailable(loadAs))
             throw new ConditionFailedException("A track with this name already exists");

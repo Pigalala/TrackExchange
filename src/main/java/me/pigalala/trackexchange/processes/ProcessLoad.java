@@ -43,7 +43,6 @@ public class ProcessLoad extends Process {
                         notifyProcessFinishText(System.currentTimeMillis() - startTime);
                     else
                         notifyProcessFinishExceptionallyText();
-                    TrackExchangeFile.cleanup();
                 }
         );
     }
