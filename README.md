@@ -1,7 +1,7 @@
 # TrackExchange
 ⚠️ **This plugin is in an experimental state and should be used with caution.**
 
-*FastAsyncWorldEdit is a dependency and must be downloaded for the plugin to function.*
+*WorldEdit is a dependency and must be downloaded for the plugin to function. (It is recommended to use FastAsyncWorldEdit)*
 ***
 
 TrackExchange is an addon for [TimingSystem](https://github.com/Makkuusen/TimingSystem) which allows you to copy and paste tracks.
