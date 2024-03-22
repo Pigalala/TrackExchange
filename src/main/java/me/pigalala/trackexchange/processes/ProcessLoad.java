@@ -1,17 +1,25 @@
 package me.pigalala.trackexchange.processes;
 
 import co.aikar.taskchain.TaskChain;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import me.makkuusen.timing.system.database.TrackDatabase;
+import me.makkuusen.timing.system.track.Track;
 import me.pigalala.trackexchange.TrackExchange;
+import me.pigalala.trackexchange.UndoAction;
 import me.pigalala.trackexchange.trackcomponents.TrackExchangeFile;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 
 public class ProcessLoad extends Process {
@@ -37,13 +45,17 @@ public class ProcessLoad extends Process {
         notifyProcessStartText();
 
         chain.async(this::doReadStage)
-                .asyncFutures((f) -> List.of(CompletableFuture.supplyAsync(this::doTrackStage), CompletableFuture.supplyAsync(this::doPasteStage)))
-                .execute((success) -> {
-                    if (success)
-                        notifyProcessFinishText(System.currentTimeMillis() - startTime);
-                    else
-                        notifyProcessFinishExceptionallyText();
+            .asyncFutures((f) -> List.of(
+                    CompletableFuture.supplyAsync(this::doTrackStage, Bukkit.getScheduler().getMainThreadExecutor(TrackExchange.instance)),
+                    CompletableFuture.supplyAsync(this::doPasteStage, Bukkit.getScheduler().getMainThreadExecutor(TrackExchange.instance))
+                    )).execute((success) -> {
+                if (success) {
+                    createUndo();
+                    notifyProcessFinishText(System.currentTimeMillis() - startTime);
+                } else {
+                    notifyProcessFinishExceptionallyText();
                 }
+            }
         );
     }
 
@@ -69,7 +81,8 @@ public class ProcessLoad extends Process {
         notifyStageBeginText(stage);
         TrackExchangeFile trackExchangeFile = chain.getTaskData("trackExchangeFile");
         try {
-            trackExchangeFile.getTrack().createTrack(player);
+            Track track = trackExchangeFile.getTrack().createTrack(player);
+            chain.setTaskData("track", track);
             notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (SQLException e) {
             notifyStageFinishExceptionallyText(stage, e);
@@ -87,7 +100,8 @@ public class ProcessLoad extends Process {
         trackExchangeFile.getSchematic().ifPresentOrElse(schematic -> {
             notifyStageBeginText(stage);
             try {
-                schematic.pasteAt(origin);
+                EditSession session = schematic.pasteAt(origin);
+                chain.setTaskData("editSession", session);
                 notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
             } catch (WorldEditException e) {
                 notifyStageFinishExceptionallyText(stage, e);
@@ -97,5 +111,24 @@ public class ProcessLoad extends Process {
         });
 
         return null;
+    }
+
+    private void createUndo() {
+        UndoAction undoAction = () -> {
+            EditSession session = chain.getTaskData("editSession");
+            Track track = chain.getTaskData("track");
+            if (session != null) {
+                Bukkit.getScheduler().runTaskAsynchronously(TrackExchange.instance, () -> {
+                    try (EditSession undoSession = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(player))) {
+                        session.undo(undoSession);
+                    }
+                });
+            }
+            TrackDatabase.removeTrack(track);
+            player.sendMessage(Component.text("Undid your thingy.", NamedTextColor.GREEN));
+        };
+
+        TrackExchange.playerActions.putIfAbsent(player.getUniqueId(), new Stack<>());
+        TrackExchange.playerActions.get(player.getUniqueId()).push(undoAction);
     }
 }
