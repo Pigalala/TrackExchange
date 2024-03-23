@@ -46,8 +46,8 @@ public class ProcessLoad extends Process {
 
         chain.async(this::doReadStage)
             .asyncFutures((f) -> List.of(
-                    CompletableFuture.supplyAsync(this::doTrackStage, Bukkit.getScheduler().getMainThreadExecutor(TrackExchange.instance)),
-                    CompletableFuture.supplyAsync(this::doPasteStage, Bukkit.getScheduler().getMainThreadExecutor(TrackExchange.instance))
+                    CompletableFuture.supplyAsync(this::doTrackStage),
+                    CompletableFuture.supplyAsync(this::doPasteStage)
                     )).execute((success) -> {
                 if (success) {
                     createUndo();
@@ -115,8 +115,9 @@ public class ProcessLoad extends Process {
 
     private void createUndo() {
         UndoAction undoAction = () -> {
-            EditSession session = chain.getTaskData("editSession");
             Track track = chain.getTaskData("track");
+            EditSession session = chain.getTaskData("editSession");
+            player.sendMessage(Component.text("Undoing track " + track.getDisplayName() + ".", NamedTextColor.YELLOW));
             if (session != null) {
                 Bukkit.getScheduler().runTaskAsynchronously(TrackExchange.instance, () -> {
                     try (EditSession undoSession = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(player))) {
@@ -125,7 +126,6 @@ public class ProcessLoad extends Process {
                 });
             }
             TrackDatabase.removeTrack(track);
-            player.sendMessage(Component.text("Undid your thingy.", NamedTextColor.GREEN));
         };
 
         TrackExchange.playerActions.putIfAbsent(player.getUniqueId(), new Stack<>());
