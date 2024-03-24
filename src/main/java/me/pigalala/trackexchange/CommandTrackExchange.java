@@ -52,4 +52,14 @@ public class CommandTrackExchange extends BaseCommand {
 
         new ProcessLoad(player, fileName, loadAs).execute();
     }
+
+    @Subcommand("undo")
+    public static void onUndo(Player player) {
+        var actions = TrackExchange.playerActions.get(player.getUniqueId());
+        if (actions.isEmpty()) {
+            throw new ConditionFailedException("You have nothing to undo.");
+        }
+
+        actions.pop().undo();
+    }
 }

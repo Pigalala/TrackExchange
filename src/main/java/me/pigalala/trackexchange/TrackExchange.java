@@ -12,10 +12,15 @@ import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.track.Track;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
 import java.util.Optional;
+import java.util.Stack;
+import java.util.UUID;
 
 public final class TrackExchange extends JavaPlugin {
     public static final int TRACK_VERSION = 4;
+
+    public static HashMap<UUID, Stack<UndoAction>> playerActions = new HashMap<>();
 
     public static TrackExchange instance;
     private static TaskChainFactory taskChainFactory;
