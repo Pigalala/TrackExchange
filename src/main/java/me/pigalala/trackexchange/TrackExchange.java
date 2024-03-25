@@ -20,7 +20,7 @@ import java.util.UUID;
 public final class TrackExchange extends JavaPlugin {
     public static final int TRACK_VERSION = 4;
 
-    public static HashMap<UUID, Stack<UndoAction>> playerActions = new HashMap<>();
+    public static HashMap<UUID, Stack<Runnable>> playerActions = new HashMap<>();
 
     public static TrackExchange instance;
     private static TaskChainFactory taskChainFactory;

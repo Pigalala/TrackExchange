@@ -60,6 +60,6 @@ public class CommandTrackExchange extends BaseCommand {
             throw new ConditionFailedException("You have nothing to undo.");
         }
 
-        actions.pop().undo();
+        actions.pop().run();
     }
 }

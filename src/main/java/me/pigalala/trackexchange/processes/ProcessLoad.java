@@ -8,7 +8,6 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.track.Track;
 import me.pigalala.trackexchange.TrackExchange;
-import me.pigalala.trackexchange.UndoAction;
 import me.pigalala.trackexchange.trackcomponents.TrackExchangeFile;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -114,7 +113,7 @@ public class ProcessLoad extends Process {
     }
 
     private void createUndo() {
-        UndoAction undoAction = () -> {
+        Runnable undoAction = () -> {
             Track track = chain.getTaskData("track");
             EditSession session = chain.getTaskData("editSession");
             player.sendMessage(Component.text("Undoing track " + track.getDisplayName() + ".", NamedTextColor.YELLOW));
