@@ -15,7 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Optional;
 
 public final class TrackExchange extends JavaPlugin {
-    public static final int TRACK_VERSION = 4;
+    public static final int TRACK_VERSION = 5;
 
     public static TrackExchange instance;
     private static TaskChainFactory taskChainFactory;
@@ -25,8 +25,9 @@ public final class TrackExchange extends JavaPlugin {
         instance = this;
         taskChainFactory = BukkitTaskChainFactory.create(this);
 
-        if(!getDataFolder().exists())
+        if(!getDataFolder().exists()) {
             getDataFolder().mkdir();
+        }
 
         PaperCommandManager paperCommandManager = new PaperCommandManager(this);
         paperCommandManager.getCommandCompletions().registerAsyncCompletion("track", context -> TrackDatabase.getTracksAsStrings(context.getPlayer()));

@@ -6,11 +6,12 @@ import me.makkuusen.timing.system.track.locations.TrackLocation;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
+import org.json.simple.JSONObject;
 
 import java.io.Serializable;
 import java.sql.SQLException;
 
-public class TrackExchangeLocation implements Serializable {
+public class TrackExchangeLocation implements TrackComponent {
 
     private final int index;
     private final SimpleLocation location;
@@ -20,6 +21,12 @@ public class TrackExchangeLocation implements Serializable {
         index = trackLocation.getIndex();
         location = new SimpleLocation(trackLocation.getLocation());
         type = trackLocation.getLocationType().toString();
+    }
+
+    public TrackExchangeLocation(JSONObject locationBody) {
+        index = Integer.parseInt(String.valueOf(locationBody.get("index")));
+        location = new SimpleLocation((JSONObject) locationBody.get("location"));
+        type = String.valueOf(locationBody.get("type"));
     }
 
     public TrackLocation.Type getType() {
@@ -36,5 +43,13 @@ public class TrackExchangeLocation implements Serializable {
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public JSONObject asJson() {
+        JSONObject locationBody = new JSONObject();
+        locationBody.put("index", index);
+        locationBody.put("location", location.asJson());
+        locationBody.put("type", type);
+        return locationBody;
     }
 }
