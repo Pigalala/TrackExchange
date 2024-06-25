@@ -1,5 +1,6 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
@@ -29,7 +30,7 @@ public class TrackExchangeSchematic {
         clipboard.save(file, BuiltInClipboardFormat.FAST);
     }
 
-    public void pasteAt(Location location) throws WorldEditException {
-        clipboard.paste(BukkitAdapter.adapt(location.getWorld()), offset.toBlockVector3().add(new SimpleLocation(location).toBlockVector3()));
+    public EditSession pasteAt(Location location) throws WorldEditException {
+        return clipboard.paste(BukkitAdapter.adapt(location.getWorld()), offset.toBlockVector3().add(new SimpleLocation(location).toBlockVector3()));
     }
 }
