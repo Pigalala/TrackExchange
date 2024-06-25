@@ -1,10 +1,9 @@
 package me.pigalala.trackexchange.trackcomponents;
 
 import me.makkuusen.timing.system.track.options.TrackOption;
+import org.json.simple.JSONObject;
 
-import java.io.Serializable;
-
-public class TrackExchangeOption implements Serializable {
+public class TrackExchangeOption implements TrackComponent {
 
     private final int id;
 
@@ -12,7 +11,17 @@ public class TrackExchangeOption implements Serializable {
         id = trackOption.getId();
     }
 
+    public TrackExchangeOption(JSONObject optionBody) {
+        id = Integer.parseInt(String.valueOf(optionBody.get("id")));
+    }
+
     public TrackOption toTrackOption() {
         return TrackOption.fromID(id);
+    }
+
+    public JSONObject asJson() {
+        JSONObject optionBody = new JSONObject();
+        optionBody.put("id", id);
+        return optionBody;
     }
 }

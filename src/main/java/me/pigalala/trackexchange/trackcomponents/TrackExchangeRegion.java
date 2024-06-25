@@ -12,13 +12,15 @@ import me.makkuusen.timing.system.track.regions.TrackRegion;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrackExchangeRegion implements Serializable {
+public class TrackExchangeRegion implements TrackComponent {
 
     private final int regionIndex;
     private final String regionType;
@@ -40,6 +42,18 @@ public class TrackExchangeRegion implements Serializable {
             points = polyRegion.getPolygonal2DRegion().getPoints().stream().map(vec -> vec.getX() + " " + vec.getZ()).toList();
         else
             points = new ArrayList<>();
+    }
+
+    public TrackExchangeRegion(JSONObject regionBody) {
+        regionIndex = Integer.parseInt(String.valueOf(regionBody.get("index")));
+        regionType = String.valueOf(regionBody.get("type"));
+        regionShape = String.valueOf(regionBody.get("shape"));
+        spawnLocation = new SimpleLocation((JSONObject) regionBody.get("spawn"));
+        minP = new SimpleLocation((JSONObject) regionBody.get("minP"));
+        maxP = new SimpleLocation((JSONObject) regionBody.get("maxP"));
+
+        points = new ArrayList<>();
+        ((JSONArray) regionBody.get("points")).forEach(pont -> points.add(String.valueOf(pont)));
     }
 
     public TrackRegion.RegionType getRegionType() {
@@ -86,5 +100,22 @@ public class TrackExchangeRegion implements Serializable {
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    @Override
+    public JSONObject asJson() {
+        JSONObject regionBody = new JSONObject();
+        regionBody.put("index", regionIndex);
+        regionBody.put("type", regionType);
+        regionBody.put("shape", regionShape);
+        regionBody.put("spawn", spawnLocation.asJson());
+        regionBody.put("minP", minP.asJson());
+        regionBody.put("maxP", maxP.asJson());
+
+        JSONArray pointsArray = new JSONArray();
+        pointsArray.addAll(points);
+        regionBody.put("points", pointsArray);
+
+        return regionBody;
     }
 }

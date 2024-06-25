@@ -44,8 +44,9 @@ public class TrackExchangeFile {
 
         JSONObject data = new JSONObject();
         data.put("version", TrackExchange.TRACK_VERSION);
-        if(getSchematic().isPresent())
-            data.put("clipboardOffset", new SimpleLocation(SimpleLocation.getOffset(getSchematic().get().getClipboard().getOrigin(), origin.toBlockVector3())).toJson());
+        if (getSchematic().isPresent()) {
+            data.put("clipboardOffset", new SimpleLocation(SimpleLocation.getOffset(getSchematic().get().getClipboard().getOrigin(), origin.toBlockVector3())).asJson());
+        }
 
         dataFile.createNewFile();
         try (FileWriter writer = new FileWriter(dataFile)) {
@@ -53,11 +54,11 @@ public class TrackExchangeFile {
         }
 
         trackFile.createNewFile();
-        try(FileOutputStream fileOut = new FileOutputStream(trackFile); ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-            out.writeObject(track);
+        try (FileWriter writer = new FileWriter(trackFile)) {
+            writer.write(track.asJson().toJSONString());
         }
 
-        if(getSchematic().isPresent()) {
+        if (getSchematic().isPresent()) {
             schematicFile.createNewFile();
             schematic.saveTo(schematicFile);
         }
@@ -78,17 +79,20 @@ public class TrackExchangeFile {
             JSONParser parser = new JSONParser();
             JSONObject data = (JSONObject) parser.parse(reader);
             int version = Integer.parseInt(String.valueOf(data.get("version")));
-            if(version != TrackExchange.TRACK_VERSION)
+            if (version != TrackExchange.TRACK_VERSION) {
                 throw new RuntimeException("This track's version does not match the server's version. (Track: " + version + ". Server: " + TrackExchange.TRACK_VERSION + ")");
-
+            }
             JSONObject clipboardOffsetObject = (JSONObject) data.get("clipboardOffset");
-            if(clipboardOffsetObject != null)
+            if (clipboardOffsetObject != null) {
                 clipboardOffset = SimpleLocation.fromJson(clipboardOffsetObject);
+            }
         }
 
         TrackExchangeTrack trackExchangeTrack;
-        try(FileInputStream fileIn = new FileInputStream(trackFile); ObjectInputStream in = new ObjectInputStream(fileIn)) {
-            trackExchangeTrack = (TrackExchangeTrack) in.readObject();
+        try (FileReader reader = new FileReader(trackFile)) {
+            JSONParser parser = new JSONParser();
+            JSONObject trackData = (JSONObject) parser.parse(reader);
+            trackExchangeTrack = new TrackExchangeTrack(trackData);
             trackExchangeTrack.setDisplayName(newName);
         }
 
