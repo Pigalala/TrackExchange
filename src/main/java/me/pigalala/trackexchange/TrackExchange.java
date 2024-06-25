@@ -22,8 +22,6 @@ public final class TrackExchange extends JavaPlugin {
 
     public static HashMap<UUID, Stack<Runnable>> playerActions = new HashMap<>();
 
-    public static HashMap<UUID, Stack<Runnable>> playerActions = new HashMap<>();
-
     public static TrackExchange instance;
     private static TaskChainFactory taskChainFactory;
 
