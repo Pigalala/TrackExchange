@@ -18,17 +18,16 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class TrackExchangeTrack implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 7656876361793249411L;
+public class TrackExchangeTrack implements TrackComponent {
 
     @Setter
     private String displayName;
@@ -65,6 +64,33 @@ public class TrackExchangeTrack implements Serializable {
 
         spawnLocation = new SimpleLocation(track.getSpawnLocation());
         this.origin = origin;
+    }
+
+    public TrackExchangeTrack(JSONObject trackBody) {
+        owner = UUID.fromString(String.valueOf(trackBody.get("owner")));
+        dateCreated = Long.parseLong(String.valueOf(trackBody.get("dateCreated")));
+        guiItem = String.valueOf(trackBody.get("guiItem"));
+        weight = Integer.parseInt(String.valueOf(trackBody.get("weight")));
+        trackType = String.valueOf(trackBody.get("trackType"));
+        boatUtilsMode = Short.parseShort(String.valueOf(trackBody.get("boatUtilsMode")));
+
+        contributors = new ArrayList<>();
+        ((JSONArray) trackBody.get("contributors")).forEach(uuidRaw -> contributors.add(UUID.fromString(String.valueOf(uuidRaw))));
+
+        regions = new ArrayList<>();
+        ((JSONArray) trackBody.get("regions")).forEach(regionRaw -> regions.add(new TrackExchangeRegion((JSONObject) regionRaw)));
+
+        locations = new ArrayList<>();
+        ((JSONArray) trackBody.get("locations")).forEach(locationRaw -> locations.add(new TrackExchangeLocation((JSONObject) locationRaw)));
+
+        tags = new ArrayList<>();
+        ((JSONArray) trackBody.get("tags")).forEach(tagRaw -> tags.add(new TrackExchangeTag((JSONObject) tagRaw)));
+
+        options = new ArrayList<>();
+        ((JSONArray) trackBody.get("options")).forEach(optionRaw -> options.add(new TrackExchangeOption((JSONObject) optionRaw)));
+
+        spawnLocation = new SimpleLocation((JSONObject) trackBody.get("spawn"));
+        origin = new SimpleLocation((JSONObject) trackBody.get("origin"));
     }
 
     public Track createTrack(Player playerPasting) throws SQLException {
@@ -111,5 +137,40 @@ public class TrackExchangeTrack implements Serializable {
         });
 
         return track;
+    }
+
+    @Override
+    public JSONObject asJson() {
+        JSONObject trackBody = new JSONObject();
+        trackBody.put("owner", owner.toString());
+        trackBody.put("dateCreated", dateCreated);
+        trackBody.put("guiItem", guiItem);
+        trackBody.put("weight", weight);
+        trackBody.put("trackType", trackType);
+        trackBody.put("boatUtilsMode", boatUtilsMode);
+        trackBody.put("spawn", spawnLocation.asJson());
+        trackBody.put("origin", origin.asJson());
+
+        JSONArray contributorsArray = new JSONArray();
+        contributors.forEach(uuid -> contributorsArray.add(uuid.toString()));
+        trackBody.put("contributors", contributorsArray);
+
+        JSONArray regionsArray = new JSONArray();
+        regions.forEach(region -> regionsArray.add(region.asJson()));
+        trackBody.put("regions", regionsArray);
+
+        JSONArray locationsArray = new JSONArray();
+        locations.forEach(location -> locationsArray.add(location.asJson()));
+        trackBody.put("locations", locationsArray);
+
+        JSONArray tagsArray = new JSONArray();
+        tags.forEach(tag -> tagsArray.add(tag.asJson()));
+        trackBody.put("tags", tagsArray);
+
+        JSONArray optionsArray = new JSONArray();
+        options.forEach(option -> optionsArray.add(option.asJson()));
+        trackBody.put("options", optionsArray);
+
+        return trackBody;
     }
 }

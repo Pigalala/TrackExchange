@@ -18,7 +18,7 @@ import java.util.Stack;
 import java.util.UUID;
 
 public final class TrackExchange extends JavaPlugin {
-    public static final int TRACK_VERSION = 4;
+    public static final int TRACK_VERSION = 5;
 
     public static HashMap<UUID, Stack<Runnable>> playerActions = new HashMap<>();
 
@@ -30,8 +30,9 @@ public final class TrackExchange extends JavaPlugin {
         instance = this;
         taskChainFactory = BukkitTaskChainFactory.create(this);
 
-        if(!getDataFolder().exists())
+        if(!getDataFolder().exists()) {
             getDataFolder().mkdir();
+        }
 
         PaperCommandManager paperCommandManager = new PaperCommandManager(this);
         paperCommandManager.getCommandCompletions().registerAsyncCompletion("track", context -> TrackDatabase.getTracksAsStrings(context.getPlayer()));

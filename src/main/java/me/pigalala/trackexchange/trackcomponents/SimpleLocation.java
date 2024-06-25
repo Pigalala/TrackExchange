@@ -6,9 +6,7 @@ import org.bukkit.World;
 import org.bukkit.util.Vector;
 import org.json.simple.JSONObject;
 
-import java.io.Serializable;
-
-public class SimpleLocation implements Serializable {
+public class SimpleLocation implements TrackComponent {
 
     private final double x;
     private final double y;
@@ -32,20 +30,20 @@ public class SimpleLocation implements Serializable {
         pitch = 0;
     }
 
+    public SimpleLocation(JSONObject locationBody) {
+        x = Double.parseDouble(String.valueOf(locationBody.get("x")));
+        y = Double.parseDouble(String.valueOf(locationBody.get("y")));
+        z = Double.parseDouble(String.valueOf(locationBody.get("z")));
+        yaw = Float.parseFloat(String.valueOf(locationBody.get("yaw")));
+        pitch = Float.parseFloat(String.valueOf(locationBody.get("pitch")));
+    }
+
     public Location toLocation(World world) {
         return new Location(world, x, y, z, yaw, pitch);
     }
 
     public BlockVector3 toBlockVector3() {
         return BlockVector3.at(x, y, z);
-    }
-
-    public JSONObject toJson() {
-        JSONObject json = new JSONObject();
-        json.put("x", x);
-        json.put("y", y);
-        json.put("z", z);
-        return json;
     }
 
     public static SimpleLocation fromJson(JSONObject jsonObject) {
@@ -68,5 +66,16 @@ public class SimpleLocation implements Serializable {
         double y = from.getY() - to.getY();
         double z = from.getZ() - to.getZ();
         return BlockVector3.at(x, y, z);
+    }
+
+    @Override
+    public JSONObject asJson() {
+        JSONObject locationBody = new JSONObject();
+        locationBody.put("x", x);
+        locationBody.put("y", y);
+        locationBody.put("z", z);
+        locationBody.put("yaw", yaw);
+        locationBody.put("pitch", pitch);
+        return locationBody;
     }
 }
