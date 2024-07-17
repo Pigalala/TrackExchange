@@ -5,7 +5,6 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>me.pigalala</groupId>
-  <artifactId>TrackExchange</artifactId>
   <version>0.3.0</version>
   <packaging>jar</packaging>
 
