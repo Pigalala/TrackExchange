@@ -53,7 +53,10 @@ public class TrackExchangeRegion implements TrackComponent {
         maxP = new SimpleLocation((JSONObject) regionBody.get("maxP"));
 
         points = new ArrayList<>();
-        ((JSONArray) regionBody.get("points")).forEach(pont -> points.add(String.valueOf(pont)));
+        Object pointsArrayRaw = regionBody.get("points");
+        if (pointsArrayRaw != null) {
+            ((JSONArray) pointsArrayRaw).forEach(pont -> points.add(String.valueOf(pont)));
+        }
     }
 
     public TrackRegion.RegionType getRegionType() {
@@ -112,9 +115,11 @@ public class TrackExchangeRegion implements TrackComponent {
         regionBody.put("minP", minP.asJson());
         regionBody.put("maxP", maxP.asJson());
 
-        JSONArray pointsArray = new JSONArray();
-        pointsArray.addAll(points);
-        regionBody.put("points", pointsArray);
+        if (!points.isEmpty()) {
+            JSONArray pointsArray = new JSONArray();
+            pointsArray.addAll(points);
+            regionBody.put("points", pointsArray);
+        }
 
         return regionBody;
     }
