@@ -1,14 +1,13 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import com.google.gson.JsonObject;
 import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.track.Track;
 import me.makkuusen.timing.system.track.locations.TrackLocation;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
-import org.json.simple.JSONObject;
 
-import java.io.Serializable;
 import java.sql.SQLException;
 
 public class TrackExchangeLocation implements TrackComponent {
@@ -23,10 +22,10 @@ public class TrackExchangeLocation implements TrackComponent {
         type = trackLocation.getLocationType().toString();
     }
 
-    public TrackExchangeLocation(JSONObject locationBody) {
-        index = Integer.parseInt(String.valueOf(locationBody.get("index")));
-        location = new SimpleLocation((JSONObject) locationBody.get("location"));
-        type = String.valueOf(locationBody.get("type"));
+    public TrackExchangeLocation(JsonObject locationBody) {
+        index = locationBody.get("index").getAsInt();
+        location = new SimpleLocation(locationBody.get("location").getAsJsonObject());
+        type = locationBody.get("type").getAsString();
     }
 
     public TrackLocation.Type getType() {
@@ -45,11 +44,11 @@ public class TrackExchangeLocation implements TrackComponent {
         }
     }
 
-    public JSONObject asJson() {
-        JSONObject locationBody = new JSONObject();
-        locationBody.put("index", index);
-        locationBody.put("location", location.asJson());
-        locationBody.put("type", type);
+    public JsonObject asJson() {
+        var locationBody = new JsonObject();
+        locationBody.addProperty("index", index);
+        locationBody.add("location", location.asJson());
+        locationBody.addProperty("type", type);
         return locationBody;
     }
 }

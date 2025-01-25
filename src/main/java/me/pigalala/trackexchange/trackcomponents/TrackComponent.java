@@ -1,9 +1,9 @@
 package me.pigalala.trackexchange.trackcomponents;
 
-import org.json.simple.JSONObject;
+import com.google.gson.JsonObject;
 
 public interface TrackComponent {
 
-    JSONObject asJson();
+    JsonObject asJson();
 
 }

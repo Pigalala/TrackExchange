@@ -1,13 +1,13 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.math.BlockVector3;
 import lombok.Getter;
 import me.pigalala.trackexchange.TrackExchange;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.nio.file.*;
@@ -42,20 +42,20 @@ public class TrackExchangeFile {
         File trackFile = new File(dir, "track.component");
         File schematicFile = new File(dir, "schematic.component");
 
-        JSONObject data = new JSONObject();
-        data.put("version", TrackExchange.TRACK_VERSION);
+        var data = new JsonObject();
+        data.addProperty("version", TrackExchange.TRACK_VERSION);
         if (getSchematic().isPresent()) {
-            data.put("clipboardOffset", new SimpleLocation(SimpleLocation.getOffset(getSchematic().get().getClipboard().getOrigin(), origin.toBlockVector3())).asJson());
+            data.add("clipboardOffset", new SimpleLocation(SimpleLocation.getOffset(getSchematic().get().getClipboard().getOrigin(), origin.toBlockVector3())).asJson());
         }
 
         dataFile.createNewFile();
         try (FileWriter writer = new FileWriter(dataFile)) {
-            writer.write(data.toJSONString());
+            writer.write(data.toString());
         }
 
         trackFile.createNewFile();
         try (FileWriter writer = new FileWriter(trackFile)) {
-            writer.write(track.asJson().toJSONString());
+            writer.write(track.asJson().toString());
         }
 
         if (getSchematic().isPresent()) {
@@ -76,13 +76,12 @@ public class TrackExchangeFile {
 
         SimpleLocation clipboardOffset = new SimpleLocation(BlockVector3.at(0, 0, 0));
         try (FileReader reader = new FileReader(dataFile)) {
-            JSONParser parser = new JSONParser();
-            JSONObject data = (JSONObject) parser.parse(reader);
-            int version = Integer.parseInt(String.valueOf(data.get("version")));
+            JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();
+            int version = data.get("version").getAsInt();
             if (version != TrackExchange.TRACK_VERSION) {
                 throw new RuntimeException("This track's version does not match the server's version. (Track: " + version + ". Server: " + TrackExchange.TRACK_VERSION + ")");
             }
-            JSONObject clipboardOffsetObject = (JSONObject) data.get("clipboardOffset");
+            JsonObject clipboardOffsetObject = data.get("clipboardOffset").getAsJsonObject();
             if (clipboardOffsetObject != null) {
                 clipboardOffset = SimpleLocation.fromJson(clipboardOffsetObject);
             }
@@ -90,8 +89,7 @@ public class TrackExchangeFile {
 
         TrackExchangeTrack trackExchangeTrack;
         try (FileReader reader = new FileReader(trackFile)) {
-            JSONParser parser = new JSONParser();
-            JSONObject trackData = (JSONObject) parser.parse(reader);
+            JsonObject trackData = JsonParser.parseReader(reader).getAsJsonObject();
             trackExchangeTrack = new TrackExchangeTrack(trackData);
             trackExchangeTrack.setDisplayName(newName);
         }
@@ -175,8 +173,9 @@ public class TrackExchangeFile {
     }
 
     public static void cleanup(File dir) {
-        if(dir.listFiles() != null)
+        if (dir.listFiles() != null) {
             Arrays.stream(dir.listFiles()).forEach(File::delete);
+        }
         dir.delete();
         new File(TrackExchange.instance.getDataFolder(), "data.component").delete();
         new File(TrackExchange.instance.getDataFolder(), "track.component").delete();
