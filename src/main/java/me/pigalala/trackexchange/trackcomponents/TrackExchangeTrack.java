@@ -133,7 +133,7 @@ public class TrackExchangeTrack implements TrackComponent {
         });
 
         options.stream().map(TrackExchangeOption::toTrackOption).forEach(option -> {
-            track.getTrackOptions().add(option);
+            track.getTrackOptions().create(option);
         });
 
         return track;
