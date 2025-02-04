@@ -1,10 +1,10 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import com.google.gson.JsonObject;
 import com.sk89q.worldedit.math.BlockVector3;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
-import org.json.simple.JSONObject;
 
 public class SimpleLocation implements TrackComponent {
 
@@ -30,12 +30,12 @@ public class SimpleLocation implements TrackComponent {
         pitch = 0;
     }
 
-    public SimpleLocation(JSONObject locationBody) {
-        x = Double.parseDouble(String.valueOf(locationBody.get("x")));
-        y = Double.parseDouble(String.valueOf(locationBody.get("y")));
-        z = Double.parseDouble(String.valueOf(locationBody.get("z")));
-        yaw = Float.parseFloat(String.valueOf(locationBody.get("yaw")));
-        pitch = Float.parseFloat(String.valueOf(locationBody.get("pitch")));
+    public SimpleLocation(JsonObject locationBody) {
+        x = locationBody.get("x").getAsDouble();
+        y = locationBody.get("y").getAsDouble();
+        z = locationBody.get("z").getAsDouble();
+        yaw = locationBody.get("yaw").getAsFloat();
+        pitch = locationBody.get("pitch").getAsFloat();
     }
 
     public Location toLocation(World world) {
@@ -46,7 +46,7 @@ public class SimpleLocation implements TrackComponent {
         return BlockVector3.at(x, y, z);
     }
 
-    public static SimpleLocation fromJson(JSONObject jsonObject) {
+    public static SimpleLocation fromJson(JsonObject jsonObject) {
         double x = Double.parseDouble(String.valueOf(jsonObject.get("x")));
         double y = Double.parseDouble(String.valueOf(jsonObject.get("y")));
         double z = Double.parseDouble(String.valueOf(jsonObject.get("z")));
@@ -69,13 +69,13 @@ public class SimpleLocation implements TrackComponent {
     }
 
     @Override
-    public JSONObject asJson() {
-        JSONObject locationBody = new JSONObject();
-        locationBody.put("x", x);
-        locationBody.put("y", y);
-        locationBody.put("z", z);
-        locationBody.put("yaw", yaw);
-        locationBody.put("pitch", pitch);
+    public JsonObject asJson() {
+        var locationBody = new JsonObject();
+        locationBody.addProperty("x", x);
+        locationBody.addProperty("y", y);
+        locationBody.addProperty("z", z);
+        locationBody.addProperty("yaw", yaw);
+        locationBody.addProperty("pitch", pitch);
         return locationBody;
     }
 }

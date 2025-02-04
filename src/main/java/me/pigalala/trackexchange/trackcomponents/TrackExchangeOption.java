@@ -1,7 +1,7 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import com.google.gson.JsonObject;
 import me.makkuusen.timing.system.track.options.TrackOption;
-import org.json.simple.JSONObject;
 
 public class TrackExchangeOption implements TrackComponent {
 
@@ -11,17 +11,17 @@ public class TrackExchangeOption implements TrackComponent {
         id = trackOption.getId();
     }
 
-    public TrackExchangeOption(JSONObject optionBody) {
-        id = Integer.parseInt(String.valueOf(optionBody.get("id")));
+    public TrackExchangeOption(JsonObject optionBody) {
+        id = optionBody.get("id").getAsInt();
     }
 
     public TrackOption toTrackOption() {
         return TrackOption.fromID(id);
     }
 
-    public JSONObject asJson() {
-        JSONObject optionBody = new JSONObject();
-        optionBody.put("id", id);
+    public JsonObject asJson() {
+        var optionBody = new JsonObject();
+        optionBody.addProperty("id", id);
         return optionBody;
     }
 }

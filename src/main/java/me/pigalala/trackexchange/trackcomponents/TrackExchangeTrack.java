@@ -1,5 +1,7 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 import me.makkuusen.timing.system.ApiUtilities;
@@ -18,11 +20,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,31 +65,36 @@ public class TrackExchangeTrack implements TrackComponent {
         this.origin = origin;
     }
 
-    public TrackExchangeTrack(JSONObject trackBody) {
-        owner = UUID.fromString(String.valueOf(trackBody.get("owner")));
-        dateCreated = Long.parseLong(String.valueOf(trackBody.get("dateCreated")));
-        guiItem = String.valueOf(trackBody.get("guiItem"));
-        weight = Integer.parseInt(String.valueOf(trackBody.get("weight")));
-        trackType = String.valueOf(trackBody.get("trackType"));
-        boatUtilsMode = Short.parseShort(String.valueOf(trackBody.get("boatUtilsMode")));
+    public TrackExchangeTrack(JsonObject trackBody) {
+        owner = UUID.fromString(trackBody.get("owner").getAsString());
+        dateCreated = trackBody.get("dateCreated").getAsLong();
+        guiItem = trackBody.get("guiItem").getAsString();
+        weight = trackBody.get("weight").getAsInt();
+        trackType = trackBody.get("trackType").getAsString();
+        boatUtilsMode = trackBody.get("boatUtilsMode").getAsShort();
 
-        contributors = new ArrayList<>();
-        ((JSONArray) trackBody.get("contributors")).forEach(uuidRaw -> contributors.add(UUID.fromString(String.valueOf(uuidRaw))));
+        contributors = trackBody.get("contributors").getAsJsonArray().asList().stream()
+                .map(json -> UUID.fromString(json.getAsString()))
+                .toList();
 
-        regions = new ArrayList<>();
-        ((JSONArray) trackBody.get("regions")).forEach(regionRaw -> regions.add(new TrackExchangeRegion((JSONObject) regionRaw)));
+        regions = trackBody.get("regions").getAsJsonArray().asList().stream()
+                .map(json -> new TrackExchangeRegion(json.getAsJsonObject()))
+                .toList();
 
-        locations = new ArrayList<>();
-        ((JSONArray) trackBody.get("locations")).forEach(locationRaw -> locations.add(new TrackExchangeLocation((JSONObject) locationRaw)));
+        locations = trackBody.get("locations").getAsJsonArray().asList().stream()
+                .map(json -> new TrackExchangeLocation(json.getAsJsonObject()))
+                .toList();
 
-        tags = new ArrayList<>();
-        ((JSONArray) trackBody.get("tags")).forEach(tagRaw -> tags.add(new TrackExchangeTag((JSONObject) tagRaw)));
+        tags = trackBody.get("tags").getAsJsonArray().asList().stream()
+                .map(json -> new TrackExchangeTag(json.getAsJsonObject()))
+                .toList();
 
-        options = new ArrayList<>();
-        ((JSONArray) trackBody.get("options")).forEach(optionRaw -> options.add(new TrackExchangeOption((JSONObject) optionRaw)));
+        options = trackBody.get("options").getAsJsonArray().asList().stream()
+                .map(json -> new TrackExchangeOption(json.getAsJsonObject()))
+                .toList();
 
-        spawnLocation = new SimpleLocation((JSONObject) trackBody.get("spawn"));
-        origin = new SimpleLocation((JSONObject) trackBody.get("origin"));
+        spawnLocation = new SimpleLocation(trackBody.get("spawn").getAsJsonObject());
+        origin = new SimpleLocation(trackBody.get("origin").getAsJsonObject());
     }
 
     public Track createTrack(Player playerPasting) throws SQLException {
@@ -133,43 +137,51 @@ public class TrackExchangeTrack implements TrackComponent {
         });
 
         options.stream().map(TrackExchangeOption::toTrackOption).forEach(option -> {
-            track.getTrackOptions().add(option);
+            track.getTrackOptions().create(option);
         });
 
         return track;
     }
 
     @Override
-    public JSONObject asJson() {
-        JSONObject trackBody = new JSONObject();
-        trackBody.put("owner", owner.toString());
-        trackBody.put("dateCreated", dateCreated);
-        trackBody.put("guiItem", guiItem);
-        trackBody.put("weight", weight);
-        trackBody.put("trackType", trackType);
-        trackBody.put("boatUtilsMode", boatUtilsMode);
-        trackBody.put("spawn", spawnLocation.asJson());
-        trackBody.put("origin", origin.asJson());
+    public JsonObject asJson() {
+        var trackBody = new JsonObject();
+        trackBody.addProperty("owner", owner.toString());
+        trackBody.addProperty("dateCreated", dateCreated);
+        trackBody.addProperty("guiItem", guiItem);
+        trackBody.addProperty("weight", weight);
+        trackBody.addProperty("trackType", trackType);
+        trackBody.addProperty("boatUtilsMode", boatUtilsMode);
+        trackBody.add("spawn", spawnLocation.asJson());
+        trackBody.add("origin", origin.asJson());
 
-        JSONArray contributorsArray = new JSONArray();
-        contributors.forEach(uuid -> contributorsArray.add(uuid.toString()));
-        trackBody.put("contributors", contributorsArray);
+        var contributorsArray = new JsonArray();
+        contributors.stream()
+                .map(UUID::toString)
+                .forEach(contributorsArray::add);
+        trackBody.add("contributors", contributorsArray);
 
-        JSONArray regionsArray = new JSONArray();
-        regions.forEach(region -> regionsArray.add(region.asJson()));
-        trackBody.put("regions", regionsArray);
+        var regionsArray = new JsonArray();
+        regions.stream()
+                .map(TrackExchangeRegion::asJson)
+                .forEach(regionsArray::add);
+        trackBody.add("regions", regionsArray);
 
-        JSONArray locationsArray = new JSONArray();
+        var locationsArray = new JsonArray();
         locations.forEach(location -> locationsArray.add(location.asJson()));
-        trackBody.put("locations", locationsArray);
+        trackBody.add("locations", locationsArray);
 
-        JSONArray tagsArray = new JSONArray();
-        tags.forEach(tag -> tagsArray.add(tag.asJson()));
-        trackBody.put("tags", tagsArray);
+        var tagsArray = new JsonArray();
+        tags.stream()
+                .map(TrackExchangeTag::asJson)
+                .forEach(tagsArray::add);
+        trackBody.add("tags", tagsArray);
 
-        JSONArray optionsArray = new JSONArray();
-        options.forEach(option -> optionsArray.add(option.asJson()));
-        trackBody.put("options", optionsArray);
+        var optionsArray = new JsonArray();
+        options.stream()
+                .map(TrackExchangeOption::asJson)
+                .forEach(optionsArray::add);
+        trackBody.add("options", optionsArray);
 
         return trackBody;
     }

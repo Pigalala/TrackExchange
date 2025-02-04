@@ -1,5 +1,8 @@
 package me.pigalala.trackexchange.trackcomponents;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -12,10 +15,7 @@ import me.makkuusen.timing.system.track.regions.TrackRegion;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
-import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,24 +38,28 @@ public class TrackExchangeRegion implements TrackComponent {
         minP = new SimpleLocation(trackRegion.getMinP());
         maxP = new SimpleLocation(trackRegion.getMaxP());
 
-        if(trackRegion instanceof TrackPolyRegion polyRegion)
+        if (trackRegion instanceof TrackPolyRegion polyRegion) {
             points = polyRegion.getPolygonal2DRegion().getPoints().stream().map(vec -> vec.getX() + " " + vec.getZ()).toList();
-        else
-            points = new ArrayList<>();
+        } else {
+            points = List.of();
+        }
     }
 
-    public TrackExchangeRegion(JSONObject regionBody) {
-        regionIndex = Integer.parseInt(String.valueOf(regionBody.get("index")));
-        regionType = String.valueOf(regionBody.get("type"));
-        regionShape = String.valueOf(regionBody.get("shape"));
-        spawnLocation = new SimpleLocation((JSONObject) regionBody.get("spawn"));
-        minP = new SimpleLocation((JSONObject) regionBody.get("minP"));
-        maxP = new SimpleLocation((JSONObject) regionBody.get("maxP"));
+    public TrackExchangeRegion(JsonObject regionBody) {
+        regionIndex = regionBody.get("index").getAsInt();
+        regionType = regionBody.get("type").getAsString();
+        regionShape = regionBody.get("shape").getAsString();
+        spawnLocation = new SimpleLocation(regionBody.get("spawn").getAsJsonObject());
+        minP = new SimpleLocation(regionBody.get("minP").getAsJsonObject());
+        maxP = new SimpleLocation(regionBody.get("maxP").getAsJsonObject());
 
-        points = new ArrayList<>();
-        Object pointsArrayRaw = regionBody.get("points");
-        if (pointsArrayRaw != null) {
-            ((JSONArray) pointsArrayRaw).forEach(pont -> points.add(String.valueOf(pont)));
+        JsonElement pointsArrayRaw = regionBody.get("points");
+        if (pointsArrayRaw == null) {
+            points = List.of();
+        } else {
+            points = pointsArrayRaw.getAsJsonArray().asList().stream()
+                    .map(JsonElement::getAsString)
+                    .toList();
         }
     }
 
@@ -106,19 +110,19 @@ public class TrackExchangeRegion implements TrackComponent {
     }
 
     @Override
-    public JSONObject asJson() {
-        JSONObject regionBody = new JSONObject();
-        regionBody.put("index", regionIndex);
-        regionBody.put("type", regionType);
-        regionBody.put("shape", regionShape);
-        regionBody.put("spawn", spawnLocation.asJson());
-        regionBody.put("minP", minP.asJson());
-        regionBody.put("maxP", maxP.asJson());
+    public JsonObject asJson() {
+        var regionBody = new JsonObject();
+        regionBody.addProperty("index", regionIndex);
+        regionBody.addProperty("type", regionType);
+        regionBody.addProperty("shape", regionShape);
+        regionBody.add("spawn", spawnLocation.asJson());
+        regionBody.add("minP", minP.asJson());
+        regionBody.add("maxP", maxP.asJson());
 
         if (!points.isEmpty()) {
-            JSONArray pointsArray = new JSONArray();
-            pointsArray.addAll(points);
-            regionBody.put("points", pointsArray);
+            var pointsArray = new JsonArray();
+            points.forEach(pointsArray::add);
+            regionBody.add("points", pointsArray);
         }
 
         return regionBody;
