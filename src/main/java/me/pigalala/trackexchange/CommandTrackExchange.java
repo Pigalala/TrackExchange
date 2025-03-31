@@ -56,7 +56,7 @@ public class CommandTrackExchange extends BaseCommand {
     @Subcommand("undo")
     public static void onUndo(Player player) {
         var actions = TrackExchange.playerActions.get(player.getUniqueId());
-        if (actions.isEmpty()) {
+        if (actions == null || actions.isEmpty()) {
             throw new ConditionFailedException("You have nothing to undo.");
         }
 
