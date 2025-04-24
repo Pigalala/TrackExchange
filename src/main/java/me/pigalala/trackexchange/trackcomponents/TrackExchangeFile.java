@@ -80,8 +80,8 @@ public class TrackExchangeFile {
         }
 
         SimpleLocation clipboardOffset = new SimpleLocation(BlockVector3.at(0, 0, 0));
-        JsonObject clipboardOffsetObject = dataJson.get("clipboardOffset").getAsJsonObject();
-        if (clipboardOffsetObject != null) {
+        if (dataJson.has("clipboardOffset")) {
+            JsonObject clipboardOffsetObject = dataJson.get("clipboardOffset").getAsJsonObject();
             clipboardOffset = SimpleLocation.fromJson(clipboardOffsetObject);
         }
 

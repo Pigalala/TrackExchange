@@ -4,17 +4,17 @@ import me.pigalala.trackexchange.TrackExchange;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public final class LocalFileSaver implements TrackExchangeFileSaver {
 
     @Override
     public void save(String name, byte[] bytes) {
-        Path dir = TrackExchange.getTracksPath().resolve(name);
+        Path trackExchangePath = TrackExchange.getTracksPath().resolve(name.concat(".trackexchange"));
         try {
-            Files.createDirectory(dir);
+            Files.write(trackExchangePath, bytes, StandardOpenOption.CREATE);
         } catch (Exception e) {
             TrackExchange.instance.getSLF4JLogger().error("Failed to save trackexchange locally", e);
-            return;
         }
     }
 }
