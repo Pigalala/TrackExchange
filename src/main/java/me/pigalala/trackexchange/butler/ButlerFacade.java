@@ -29,6 +29,7 @@ public final class ButlerFacade {
         try (HttpClient httpClient = HttpClient.newHttpClient()) {
             HttpResponse<String> response = httpClient.send(request.build(), r -> HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8));
 
+            TrackExchange.instance.getSLF4JLogger().info("Requested {} from butler, and received code {}", name, response.statusCode());
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 //            String trackName = json.get("name").getAsString();
             byte[] decodedTrackExchange = Base64.getDecoder().decode(json.get("track_exchange").getAsString());
