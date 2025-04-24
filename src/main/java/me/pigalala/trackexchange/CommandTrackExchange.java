@@ -38,8 +38,8 @@ public class CommandTrackExchange extends BaseCommand {
         if(loadAs == null)
             loadAs = fileName;
 
-        if(!TrackExchangeFile.trackExchangeFileExists(fileName))
-            throw new ConditionFailedException("This trackexchange file does not exist");
+//        if(!TrackExchangeFile.trackExchangeFileExists(fileName))
+//            throw new ConditionFailedException("This trackexchange file does not exist");
 
         if(TrackDatabase.trackNameNotAvailable(loadAs))
             throw new ConditionFailedException("A track with this name already exists");

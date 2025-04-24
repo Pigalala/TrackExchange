@@ -8,6 +8,9 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.track.Track;
 import me.pigalala.trackexchange.TrackExchange;
+import me.pigalala.trackexchange.file.load.ButlerFileReader;
+import me.pigalala.trackexchange.file.load.LocalFileLoader;
+import me.pigalala.trackexchange.file.load.TrackExchangeFileReader;
 import me.pigalala.trackexchange.trackcomponents.TrackExchangeFile;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -15,7 +18,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Stack;
@@ -63,8 +65,22 @@ public class ProcessLoad extends Process {
         final long startTime = System.currentTimeMillis();
 
         notifyStageBeginText(stage);
+
+        TrackExchangeFileReader fileReader;
+        if (TrackExchange.isButlerEnabled()) {
+            try {
+                fileReader = new ButlerFileReader();
+            } catch (Exception e) {
+                notifyStageFinishExceptionallyText(stage, e);
+                chain.abortChain();
+                return;
+            }
+        } else {
+            fileReader = new LocalFileLoader();
+        }
+
         try {
-            TrackExchangeFile trackExchangeFile = TrackExchangeFile.read(new File(TrackExchange.instance.getDataFolder(), fileName), loadAs);
+            TrackExchangeFile trackExchangeFile = TrackExchangeFile.read(fileName, fileReader, loadAs);
             chain.setTaskData("trackExchangeFile", trackExchangeFile);
             notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (Exception e) {

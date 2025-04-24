@@ -31,7 +31,6 @@ public class TrackExchangeTrack implements TrackComponent {
     @Setter
     private String displayName;
     private final UUID owner;
-    private final long dateCreated;
     private final String guiItem;
     private final int weight;
     private final String trackType;
@@ -49,7 +48,6 @@ public class TrackExchangeTrack implements TrackComponent {
     public TrackExchangeTrack(Track track, SimpleLocation origin) {
         displayName = track.getDisplayName();
         owner = track.getOwner().getUniqueId();
-        dateCreated = track.getDateCreated();
         guiItem = ApiUtilities.itemToString(track.getItem());
         weight = track.getWeight();
         trackType = track.getType().toString();
@@ -67,7 +65,6 @@ public class TrackExchangeTrack implements TrackComponent {
 
     public TrackExchangeTrack(JsonObject trackBody) {
         owner = UUID.fromString(trackBody.get("owner").getAsString());
-        dateCreated = trackBody.get("dateCreated").getAsLong();
         guiItem = trackBody.get("guiItem").getAsString();
         weight = trackBody.get("weight").getAsInt();
         trackType = trackBody.get("trackType").getAsString();
@@ -106,7 +103,7 @@ public class TrackExchangeTrack implements TrackComponent {
         Vector offset = SimpleLocation.getOffset(origin.toLocation(world).toBlockLocation(), playerPasting.getLocation().toBlockLocation());
         Location newSpawnLocation = spawnLocation.toLocation(world).subtract(offset);
 
-        var trackId = TimingSystem.getTrackDatabase().createTrack(owner.getUniqueId().toString(), displayName, dateCreated, weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
+        var trackId = TimingSystem.getTrackDatabase().createTrack(owner.getUniqueId().toString(), displayName, ApiUtilities.getTimestamp(), weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
         DbRow dbRow = DB.getFirstRow("SELECT * FROM `ts_tracks` WHERE `id` = " + trackId + ";");
         Track track = new Track(dbRow);
         TrackDatabase.tracks.add(track);
@@ -147,7 +144,7 @@ public class TrackExchangeTrack implements TrackComponent {
     public JsonObject asJson() {
         var trackBody = new JsonObject();
         trackBody.addProperty("owner", owner.toString());
-        trackBody.addProperty("dateCreated", dateCreated);
+        trackBody.addProperty("dateCreated", ApiUtilities.getTimestamp()); // Send date created for backwards compatibility
         trackBody.addProperty("guiItem", guiItem);
         trackBody.addProperty("weight", weight);
         trackBody.addProperty("trackType", trackType);

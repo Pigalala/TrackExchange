@@ -1,24 +1,22 @@
 package me.pigalala.trackexchange.processes;
 
 import co.aikar.taskchain.TaskChain;
-import com.fastasyncworldedit.core.Fawe;
-import com.fastasyncworldedit.core.FaweAPI;
 import com.sk89q.worldedit.*;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
-import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.regions.Region;
 import me.makkuusen.timing.system.track.Track;
 import me.pigalala.trackexchange.TrackExchange;
+import me.pigalala.trackexchange.file.save.ButlerFileSaver;
+import me.pigalala.trackexchange.file.save.LocalFileSaver;
 import me.pigalala.trackexchange.trackcomponents.TrackExchangeFile;
 import me.pigalala.trackexchange.trackcomponents.TrackExchangeSchematic;
 import me.pigalala.trackexchange.trackcomponents.TrackExchangeTrack;
 import me.pigalala.trackexchange.trackcomponents.SimpleLocation;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -106,7 +104,7 @@ public class ProcessSave extends Process {
         TrackExchangeSchematic trackExchangeSchematic = chain.getTaskData("schematic");
         TrackExchangeFile trackExchangeFile = new TrackExchangeFile(trackExchangeTrack, new SimpleLocation(origin), trackExchangeSchematic);
         try {
-            trackExchangeFile.write(new File(TrackExchange.instance.getDataFolder(), saveAs));
+            trackExchangeFile.write(saveAs, TrackExchange.isButlerEnabled() ? new ButlerFileSaver(): new LocalFileSaver());
             notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
         } catch (IOException e) {
             notifyStageFinishExceptionallyText(stage, e);
