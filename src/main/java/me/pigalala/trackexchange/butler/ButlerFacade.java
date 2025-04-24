@@ -29,20 +29,6 @@ public final class ButlerFacade {
         try (HttpClient httpClient = HttpClient.newHttpClient()) {
             HttpResponse<String> response = httpClient.send(request.build(), r -> HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8));
 
-            switch (response.statusCode()) {
-                case 200 -> { /* Looks like nothing broke. Yippee */}
-                case 401 -> {
-                    TrackExchange.instance.getSLF4JLogger().warn("Could not fetch from Butler, as we are unauthorized.");
-                    return Optional.empty();
-                }
-                case 500 -> {
-                    JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-                    TrackExchange.instance.getSLF4JLogger().warn("Could not fetch from Butler, due to a remote error: {}", json.get("error").getAsString());
-                    return Optional.empty();
-                }
-                default -> TrackExchange.instance.getSLF4JLogger().info("Requested {} from butler, and received code {}", name, response.statusCode());
-            }
-
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
             byte[] decodedTrackExchange = Base64.getDecoder().decode(json.get("track_exchange").getAsString());
             return Optional.of(decodedTrackExchange);
