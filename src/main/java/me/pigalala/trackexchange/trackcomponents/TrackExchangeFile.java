@@ -1,22 +1,23 @@
 package me.pigalala.trackexchange.trackcomponents;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.math.BlockVector3;
 import lombok.Getter;
 import me.pigalala.trackexchange.TrackExchange;
+import me.pigalala.trackexchange.file.load.TrackExchangeFileReader;
+import me.pigalala.trackexchange.file.save.TrackExchangeFileSaver;
 
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @Getter
@@ -35,7 +36,8 @@ public class TrackExchangeFile {
         return Optional.ofNullable(schematic);
     }
 
-    public void write(File dir) throws IOException {
+    public void write(String name, TrackExchangeFileSaver saver) throws IOException {
+        File dir = new File(TrackExchange.getTracksPath().toAbsolutePath().toString(), name);
         dir.mkdir();
 
         File dataFile = new File(dir, "data.component");
@@ -63,53 +65,45 @@ public class TrackExchangeFile {
             schematic.saveTo(schematicFile);
         }
 
-        zipDir(dir);
+        byte[] bytes = zipDirIntoBytes(dir);
+        saver.save(name, bytes);
         cleanup(dir);
     }
 
-    public static TrackExchangeFile read(File trackDir, String newName) throws Exception {
-        unzipDir(findFile(trackDir.getName() + ".trackexchange", TrackExchange.instance.getDataFolder()), TrackExchange.instance.getDataFolder());
+    public static TrackExchangeFile read(String trackFileName, TrackExchangeFileReader fileReader, String newName) {
+        TrackExchangeFileReader.TrackExchangeBytes trackExchangeBytes = TrackExchangeFileReader.splitBytes(fileReader.read(trackFileName));
 
-        File dataFile = new File(TrackExchange.instance.getDataFolder(), "data.component");
-        File trackFile = new File(TrackExchange.instance.getDataFolder(), "track.component");
-        File schematicFile = new File(TrackExchange.instance.getDataFolder(), "schematic.component");
+        JsonObject dataJson = trackExchangeBytes.readDataJson();
+        int version = dataJson.get("version").getAsInt();
+        if (version != TrackExchange.TRACK_VERSION) {
+            throw new RuntimeException("This track's version does not match the server's version. (Track: " + version + ". Server: " + TrackExchange.TRACK_VERSION + ")");
+        }
 
         SimpleLocation clipboardOffset = new SimpleLocation(BlockVector3.at(0, 0, 0));
-        try (FileReader reader = new FileReader(dataFile)) {
-            JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();
-            int version = data.get("version").getAsInt();
-            if (version != TrackExchange.TRACK_VERSION) {
-                throw new RuntimeException("This track's version does not match the server's version. (Track: " + version + ". Server: " + TrackExchange.TRACK_VERSION + ")");
-            }
-            JsonObject clipboardOffsetObject = data.get("clipboardOffset").getAsJsonObject();
-            if (clipboardOffsetObject != null) {
-                clipboardOffset = SimpleLocation.fromJson(clipboardOffsetObject);
-            }
+        JsonObject clipboardOffsetObject = dataJson.get("clipboardOffset").getAsJsonObject();
+        if (clipboardOffsetObject != null) {
+            clipboardOffset = SimpleLocation.fromJson(clipboardOffsetObject);
         }
 
-        TrackExchangeTrack trackExchangeTrack;
-        try (FileReader reader = new FileReader(trackFile)) {
-            JsonObject trackData = JsonParser.parseReader(reader).getAsJsonObject();
-            trackExchangeTrack = new TrackExchangeTrack(trackData);
-            trackExchangeTrack.setDisplayName(newName);
+        JsonObject trackJson = trackExchangeBytes.readTrackJson();
+        TrackExchangeTrack trackExchangeTrack = new TrackExchangeTrack(trackJson);
+        trackExchangeTrack.setDisplayName(newName);
+
+        TrackExchangeSchematic trackExchangeSchematic;
+        Optional<Clipboard> schematic = trackExchangeBytes.readSchematic();
+        if (schematic.isPresent()) {
+            trackExchangeSchematic = new TrackExchangeSchematic(schematic.get());
+            trackExchangeSchematic.setOffset(clipboardOffset);
+        } else {
+            trackExchangeSchematic = null;
         }
 
-        TrackExchangeSchematic trackExchangeSchematic = null;
-        if (schematicFile.exists()) {
-            try(FileInputStream fileIn = new FileInputStream(schematicFile)) {
-                ClipboardReader clipboardReader = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getReader(fileIn);
-                Clipboard clipboard = clipboardReader.read();
-                trackExchangeSchematic = new TrackExchangeSchematic(clipboard);
-                trackExchangeSchematic.setOffset(clipboardOffset);
-            }
-        }
-
-        cleanup(trackDir);
         return new TrackExchangeFile(trackExchangeTrack, trackExchangeTrack.getOrigin(), trackExchangeSchematic);
     }
 
-    private static void zipDir(File dir) throws IOException {
-        try(ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(dir.getPath() + ".trackexchange"))) {
+    private static byte[] zipDirIntoBytes(File dir) throws IOException {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOut = new ZipOutputStream(byteOut)) {
             Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
@@ -139,18 +133,8 @@ public class TrackExchangeFile {
                 }
             });
         }
-    }
 
-    private static void unzipDir(File dir, File dest) throws IOException {
-        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(dir.getPath()))) {
-            ZipEntry zipEntry = zipIn.getNextEntry();
-            while(zipEntry != null) {
-                Path newPath = dest.toPath().resolve(zipEntry.getName()).normalize();
-                Files.copy(zipIn, newPath, StandardCopyOption.REPLACE_EXISTING);
-                zipIn.closeEntry();
-                zipEntry = zipIn.getNextEntry();
-            }
-        }
+        return byteOut.toByteArray();
     }
 
     // Check to see if file 'find' is in 'dir' when the file name cases do not match.
@@ -168,7 +152,7 @@ public class TrackExchangeFile {
     }
 
     public static boolean trackExchangeFileExists(String fileName) {
-        File f = findFile(fileName + ".trackexchange", TrackExchange.instance.getDataFolder());
+        File f = findFile(fileName + ".trackexchange", TrackExchange.getTracksPath().toFile());
         return f != null && f.exists();
     }
 
@@ -177,8 +161,8 @@ public class TrackExchangeFile {
             Arrays.stream(dir.listFiles()).forEach(File::delete);
         }
         dir.delete();
-        new File(TrackExchange.instance.getDataFolder(), "data.component").delete();
-        new File(TrackExchange.instance.getDataFolder(), "track.component").delete();
-        new File(TrackExchange.instance.getDataFolder(), "schematic.component").delete();
+        new File(TrackExchange.getTracksPath().toFile(), "data.component").delete();
+        new File(TrackExchange.getTracksPath().toFile(), "track.component").delete();
+        new File(TrackExchange.getTracksPath().toFile(), "schematic.component").delete();
     }
 }
