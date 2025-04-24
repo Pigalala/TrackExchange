@@ -26,7 +26,7 @@ public class TrackExchangeSchematic {
 
     public byte[] clipboardAsBytes() throws IOException {
         var byteStream = new ByteArrayOutputStream();
-        clipboard.save(byteStream, BuiltInClipboardFormat.FAST);
+        clipboard.save(byteStream, BuiltInClipboardFormat.FAST_V3);
         return byteStream.toByteArray();
     }
 

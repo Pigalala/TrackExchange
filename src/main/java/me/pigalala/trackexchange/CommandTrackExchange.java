@@ -9,6 +9,9 @@ import me.makkuusen.timing.system.track.Track;
 import me.pigalala.trackexchange.processes.ProcessLoad;
 import me.pigalala.trackexchange.processes.ProcessSave;
 import me.pigalala.trackexchange.trackcomponents.TrackExchangeFile;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 @CommandAlias("trackexchange|tex|tx")
@@ -66,5 +69,12 @@ public class CommandTrackExchange extends BaseCommand {
         }
 
         actions.pop().run();
+    }
+
+    @Subcommand("reload")
+    @CommandPermission("trackexchange.reload")
+    void onReload(CommandSender sender) {
+        TrackExchange.instance.reloadConfig();
+        sender.sendMessage(Component.text("Reloaded config.", NamedTextColor.GREEN));
     }
 }
