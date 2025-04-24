@@ -41,6 +41,7 @@ public class TrackExchangeTrack implements TrackComponent {
     private final List<TrackExchangeLocation> locations;
     private final List<TrackExchangeTag> tags;
     private final List<TrackExchangeOption> options;
+    private final TrackExchangeBoatUtilsSetting boatUtilsSetting;
 
     private final SimpleLocation spawnLocation;
     private final SimpleLocation origin;
@@ -58,6 +59,7 @@ public class TrackExchangeTrack implements TrackComponent {
         locations = track.getTrackLocations().getLocations().stream().map(TrackExchangeLocation::new).toList();
         tags = track.getTrackTags().get().stream().map(TrackExchangeTag::new).toList();
         options = track.getTrackOptions().getTrackOptions().stream().map(TrackExchangeOption::new).toList();
+        boatUtilsSetting = new TrackExchangeBoatUtilsSetting(track.getBoatUtilsSetting());
 
         spawnLocation = new SimpleLocation(track.getSpawnLocation());
         this.origin = origin;
@@ -77,6 +79,8 @@ public class TrackExchangeTrack implements TrackComponent {
         regions = trackBody.get("regions").getAsJsonArray().asList().stream()
                 .map(json -> new TrackExchangeRegion(json.getAsJsonObject()))
                 .toList();
+
+        boatUtilsSetting = new TrackExchangeBoatUtilsSetting(trackBody.get("boatUtilsSetting").getAsJsonObject());
 
         locations = trackBody.get("locations").getAsJsonArray().asList().stream()
                 .map(json -> new TrackExchangeLocation(json.getAsJsonObject()))
@@ -103,7 +107,7 @@ public class TrackExchangeTrack implements TrackComponent {
         Vector offset = SimpleLocation.getOffset(origin.toLocation(world).toBlockLocation(), playerPasting.getLocation().toBlockLocation());
         Location newSpawnLocation = spawnLocation.toLocation(world).subtract(offset);
 
-        var trackId = TimingSystem.getTrackDatabase().createTrack(owner.getUniqueId().toString(), displayName, ApiUtilities.getTimestamp(), weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
+        long trackId = TimingSystem.getDatabase().createTrack(owner.getUniqueId().toString(), displayName, ApiUtilities.getTimestamp(), weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
         DbRow dbRow = DB.getFirstRow("SELECT * FROM `ts_tracks` WHERE `id` = " + trackId + ";");
         Track track = new Track(dbRow);
         TrackDatabase.tracks.add(track);
@@ -151,6 +155,9 @@ public class TrackExchangeTrack implements TrackComponent {
         trackBody.addProperty("boatUtilsMode", boatUtilsMode);
         trackBody.add("spawn", spawnLocation.asJson());
         trackBody.add("origin", origin.asJson());
+
+        trackBody.addProperty("boatUtilsMode", boatUtilsMode); // For compatibility between TimingSystems
+        trackBody.add("boatUtilsSetting", boatUtilsSetting.asJson());
 
         var contributorsArray = new JsonArray();
         contributors.stream()

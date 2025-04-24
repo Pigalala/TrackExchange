@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public final class TrackExchange extends JavaPlugin {
     public static final int TRACK_VERSION = 5;
@@ -72,15 +73,20 @@ public final class TrackExchange extends JavaPlugin {
     }
 
     private void moveTrackFiles() {
-        getDataPath().forEach(path -> {
-            if (path.endsWith(".trackexchange")) {
-                try {
-                    Files.move(path, instance.getDataPath().resolve("tracks"));
-                } catch (IOException e) {
-                    getSLF4JLogger().error("Could not migrate {} to /tracks/", path, e);
+        try (Stream<Path> children = Files.list(getDataPath())) {
+            children.forEach(path -> {
+                if (path.toString().endsWith(".trackexchange")) {
+                    try {
+                        Files.move(path, instance.getDataPath().resolve("tracks").resolve(path.getFileName()));
+                        getSLF4JLogger().info("{}", instance.getDataPath().resolve("tracks").resolve(path.getFileName()));
+                    } catch (IOException e) {
+                        getSLF4JLogger().error("Could not migrate {} to /tracks/", path, e);
+                    }
                 }
-            }
-        });
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static ContextResolver<Track, BukkitCommandExecutionContext> getTrackContextResolver() {
