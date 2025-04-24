@@ -31,7 +31,7 @@ public interface TrackExchangeFileReader {
             }
 
             try {
-                return Optional.ofNullable(BuiltInClipboardFormat.SPONGE_SCHEMATIC.getReader(new ByteArrayInputStream(schematicBytes)).read());
+                return Optional.ofNullable(BuiltInClipboardFormat.FAST_V3.getReader(new ByteArrayInputStream(schematicBytes)).read());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
