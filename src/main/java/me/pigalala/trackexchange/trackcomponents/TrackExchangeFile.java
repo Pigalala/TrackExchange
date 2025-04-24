@@ -8,15 +8,12 @@ import me.pigalala.trackexchange.TrackExchange;
 import me.pigalala.trackexchange.file.load.TrackExchangeFileReader;
 import me.pigalala.trackexchange.file.save.TrackExchangeFileSaver;
 
-import java.io.*;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -37,37 +34,22 @@ public class TrackExchangeFile {
     }
 
     public void write(String name, TrackExchangeFileSaver saver) throws IOException {
-        File dir = new File(TrackExchange.getTracksPath().toAbsolutePath().toString(), name);
-        dir.mkdir();
-
-        File dataFile = new File(dir, "data.component");
-        File trackFile = new File(dir, "track.component");
-        File schematicFile = new File(dir, "schematic.component");
-
         var data = new JsonObject();
         data.addProperty("version", TrackExchange.TRACK_VERSION);
         if (getSchematic().isPresent()) {
             data.add("clipboardOffset", new SimpleLocation(SimpleLocation.getOffset(getSchematic().get().getClipboard().getOrigin(), origin.toBlockVector3())).asJson());
         }
 
-        dataFile.createNewFile();
-        try (FileWriter writer = new FileWriter(dataFile)) {
-            writer.write(data.toString());
-        }
-
-        trackFile.createNewFile();
-        try (FileWriter writer = new FileWriter(trackFile)) {
-            writer.write(track.asJson().toString());
-        }
+        byte[] dataBytes = data.toString().getBytes(StandardCharsets.UTF_8);
+        byte[] trackBytes = track.asJson().toString().getBytes(StandardCharsets.UTF_8);
+        byte[] schematicBytes = null;
 
         if (getSchematic().isPresent()) {
-            schematicFile.createNewFile();
-            schematic.saveTo(schematicFile);
+            schematicBytes = schematic.clipboardAsBytes();
         }
 
-        byte[] bytes = zipDirIntoBytes(dir);
+        byte[] bytes = compressBytes(dataBytes, trackBytes, schematicBytes);
         saver.save(name, bytes);
-        cleanup(dir);
     }
 
     public static TrackExchangeFile read(String trackFileName, TrackExchangeFileReader fileReader, String newName) {
@@ -101,37 +83,22 @@ public class TrackExchangeFile {
         return new TrackExchangeFile(trackExchangeTrack, trackExchangeTrack.getOrigin(), trackExchangeSchematic);
     }
 
-    private static byte[] zipDirIntoBytes(File dir) throws IOException {
+    private static byte[] compressBytes(byte[] dataBytes, byte[] trackBytes, @Nullable byte[] schematicBytes) throws IOException {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (ZipOutputStream zipOut = new ZipOutputStream(byteOut)) {
-            Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-                    if(attributes.isSymbolicLink())
-                        return FileVisitResult.CONTINUE;
+        try (var zipOut = new ZipOutputStream(byteOut)) {
+            zipOut.putNextEntry(new ZipEntry("data.component"));
+            zipOut.write(dataBytes);
+            zipOut.closeEntry();
 
-                    try(FileInputStream fileIn = new FileInputStream(file.toFile())) {
-                        Path targetFile = dir.toPath().relativize(file);
-                        zipOut.putNextEntry(new ZipEntry(targetFile.toString()));
+            zipOut.putNextEntry(new ZipEntry("track.component"));
+            zipOut.write(trackBytes);
+            zipOut.closeEntry();
 
-                        byte[] buffer = new byte[1024];
-                        int len;
-                        while((len = fileIn.read(buffer)) > 0)
-                            zipOut.write(buffer, 0, len);
-                        zipOut.closeEntry();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException e) {
-                    TrackExchange.instance.getLogger().log(Level.SEVERE, "Error visiting file: " + file.toString());
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            if (schematicBytes != null) {
+                zipOut.putNextEntry(new ZipEntry("schematic.component"));
+                zipOut.write(schematicBytes);
+                zipOut.closeEntry();
+            }
         }
 
         return byteOut.toByteArray();
@@ -154,15 +121,5 @@ public class TrackExchangeFile {
     public static boolean trackExchangeFileExists(String fileName) {
         File f = findFile(fileName + ".trackexchange", TrackExchange.getTracksPath().toFile());
         return f != null && f.exists();
-    }
-
-    public static void cleanup(File dir) {
-        if (dir.listFiles() != null) {
-            Arrays.stream(dir.listFiles()).forEach(File::delete);
-        }
-        dir.delete();
-        new File(TrackExchange.getTracksPath().toFile(), "data.component").delete();
-        new File(TrackExchange.getTracksPath().toFile(), "track.component").delete();
-        new File(TrackExchange.getTracksPath().toFile(), "schematic.component").delete();
     }
 }
