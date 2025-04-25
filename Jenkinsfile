@@ -30,7 +30,7 @@ pipeline {
             steps {
                 script {
                     sh "./gradlew -Pversion=${VERSION} clean build"
-                    archiveArtifacts artifacts: "/build/libs/*.jar", fingerprint: true
+                    archiveArtifacts artifacts: "build/libs/*.jar", fingerprint: true
                 }
             }
         }
