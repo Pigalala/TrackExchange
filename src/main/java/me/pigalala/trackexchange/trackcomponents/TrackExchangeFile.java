@@ -2,6 +2,8 @@ package me.pigalala.trackexchange.trackcomponents;
 
 import com.google.gson.JsonObject;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.math.BlockVector3;
 import lombok.Getter;
 import me.pigalala.trackexchange.TrackExchange;
@@ -36,6 +38,7 @@ public class TrackExchangeFile {
     public boolean write(String name, TrackExchangeFileSaver saver) throws IOException {
         var data = new JsonObject();
         data.addProperty("version", TrackExchange.TRACK_VERSION);
+        data.addProperty("schematic_format", TrackExchangeSchematic.CLIPBOARD_FORMAT.getName());
         if (getSchematic().isPresent()) {
             data.add("clipboardOffset", new SimpleLocation(SimpleLocation.getOffset(getSchematic().get().getClipboard().getOrigin(), origin.toBlockVector3())).asJson());
         }
@@ -61,6 +64,14 @@ public class TrackExchangeFile {
             throw new RuntimeException("This track's version does not match the server's version. (Track: " + version + ". Server: " + TrackExchange.TRACK_VERSION + ")");
         }
 
+        ClipboardFormat clipboardFormat;
+        if (dataJson.has("schematic_format")) {
+            clipboardFormat = BuiltInClipboardFormat.valueOf(dataJson.get("schematic_format").getAsString());
+        } else {
+            // Old versions use this
+            clipboardFormat = BuiltInClipboardFormat.SPONGE_SCHEMATIC;
+        }
+
         SimpleLocation clipboardOffset = new SimpleLocation(BlockVector3.at(0, 0, 0));
         if (dataJson.has("clipboardOffset")) {
             JsonObject clipboardOffsetObject = dataJson.get("clipboardOffset").getAsJsonObject();
@@ -74,7 +85,7 @@ public class TrackExchangeFile {
         TrackExchangeSchematic trackExchangeSchematic;
         Optional<Clipboard> schematic = trackExchangeBytes.readSchematic();
         if (schematic.isPresent()) {
-            trackExchangeSchematic = new TrackExchangeSchematic(schematic.get());
+            trackExchangeSchematic = new TrackExchangeSchematic(schematic.get(), clipboardFormat);
             trackExchangeSchematic.setOffset(clipboardOffset);
         } else {
             trackExchangeSchematic = null;

@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 public final class TrackExchange extends JavaPlugin {
-    public static final int TRACK_VERSION = 6;
+    public static final int TRACK_VERSION = 5;
 
     public static HashMap<UUID, Stack<Runnable>> playerActions = new HashMap<>();
 
