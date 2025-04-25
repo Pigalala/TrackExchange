@@ -9,12 +9,15 @@ import java.nio.file.StandardOpenOption;
 public final class LocalFileSaver implements TrackExchangeFileSaver {
 
     @Override
-    public void save(String name, byte[] bytes) {
+    public boolean save(String name, byte[] bytes) {
         Path trackExchangePath = TrackExchange.getTracksPath().resolve(name.concat(".trackexchange"));
         try {
             Files.write(trackExchangePath, bytes, StandardOpenOption.CREATE);
         } catch (Exception e) {
             TrackExchange.instance.getSLF4JLogger().error("Failed to save trackexchange locally", e);
+            return false;
         }
+
+        return true;
     }
 }

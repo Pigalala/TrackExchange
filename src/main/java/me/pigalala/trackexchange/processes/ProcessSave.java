@@ -104,10 +104,12 @@ public class ProcessSave extends Process {
         TrackExchangeSchematic trackExchangeSchematic = chain.getTaskData("schematic");
         TrackExchangeFile trackExchangeFile = new TrackExchangeFile(trackExchangeTrack, new SimpleLocation(origin), trackExchangeSchematic);
         try {
-            trackExchangeFile.write(saveAs, TrackExchange.isButlerEnabled() ? new ButlerFileSaver(): new LocalFileSaver());
+            if (!trackExchangeFile.write(saveAs, TrackExchange.isButlerEnabled() ? new ButlerFileSaver(): new LocalFileSaver())) {
+                notifyProcessFinishExceptionallyText();
+                return;
+            }
             notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
-        } catch (IOException e) {
-            notifyStageFinishExceptionallyText(stage, e);
+        } catch (Exception e) {
             notifyStageFinishExceptionallyText(stage, e);
         }
     }
