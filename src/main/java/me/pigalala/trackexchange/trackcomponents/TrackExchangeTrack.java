@@ -21,6 +21,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+import javax.annotation.Nullable;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +42,7 @@ public class TrackExchangeTrack implements TrackComponent {
     private final List<TrackExchangeLocation> locations;
     private final List<TrackExchangeTag> tags;
     private final List<TrackExchangeOption> options;
+    @Nullable
     private final TrackExchangeBoatUtilsSetting boatUtilsSetting;
 
     private final SimpleLocation spawnLocation;
@@ -80,7 +82,11 @@ public class TrackExchangeTrack implements TrackComponent {
                 .map(json -> new TrackExchangeRegion(json.getAsJsonObject()))
                 .toList();
 
-        boatUtilsSetting = new TrackExchangeBoatUtilsSetting(trackBody.get("boatUtilsSetting").getAsJsonObject());
+        if (trackBody.has("boatUtilsSetting")) {
+            boatUtilsSetting = new TrackExchangeBoatUtilsSetting(trackBody.get("boatUtilsSetting").getAsJsonObject());
+        } else {
+            boatUtilsSetting = null;
+        }
 
         locations = trackBody.get("locations").getAsJsonArray().asList().stream()
                 .map(json -> new TrackExchangeLocation(json.getAsJsonObject()))
@@ -157,7 +163,9 @@ public class TrackExchangeTrack implements TrackComponent {
         trackBody.add("origin", origin.asJson());
 
         trackBody.addProperty("boatUtilsMode", boatUtilsMode); // For compatibility between TimingSystems
-        trackBody.add("boatUtilsSetting", boatUtilsSetting.asJson());
+        if (boatUtilsSetting != null) {
+            trackBody.add("boatUtilsSetting", boatUtilsSetting.asJson());
+        }
 
         var contributorsArray = new JsonArray();
         contributors.stream()
