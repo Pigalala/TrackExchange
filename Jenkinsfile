@@ -3,6 +3,7 @@ def VERSION
 pipeline {
     agent any
     environment {
+        SILLY = ''
     }
     stages {
         stage('Give Permission') {
