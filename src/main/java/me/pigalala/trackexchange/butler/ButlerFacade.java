@@ -53,11 +53,11 @@ public final class ButlerFacade {
     }
 
     // Assumes that bytes is the bytes of a zipped trackexchange
-    public static void upload(String name, byte[] bytes) {
+    public static boolean upload(String name, byte[] bytes) {
         Optional<String> maybeUrl = TrackExchange.getButlerUrl();
         if (maybeUrl.isEmpty()) {
             TrackExchange.instance.getSLF4JLogger().warn("Attempted to upload to Butler, but the butler URL is empty. Please update the config");
-            return;
+            return false;
         }
 
         var json = new JsonObject();
@@ -70,10 +70,28 @@ public final class ButlerFacade {
         TrackExchange.getButlerKey().ifPresent(key -> request.header("Authorization", "Key ".concat(key)));
 
         try (HttpClient httpClient = HttpClient.newHttpClient()) {
-            httpClient.send(request.build(), r -> HttpResponse.BodySubscribers.discarding());
+            HttpResponse<String> response = httpClient.send(request.build(), r -> HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8));
+            switch (response.statusCode()) {
+                case 200 -> TrackExchange.instance.getSLF4JLogger().info("Successfully uploaded to butler");
+                case 401 -> {
+                    TrackExchange.instance.getSLF4JLogger().warn("Could not upload to Butler, as we are unauthorized.");
+                    return false;
+                }
+                case 500 -> {
+                    JsonObject j = JsonParser.parseString(response.body()).getAsJsonObject();
+                    TrackExchange.instance.getSLF4JLogger().warn("Could not upload from Butler, due to a remote error: {}", j.get("error").getAsString());
+                    return false;
+                }
+                default -> {
+                    TrackExchange.instance.getSLF4JLogger().info("Requested to upload {} to butler, and received code {}", name, response.statusCode());
+                    return false;
+                }
+            }
         } catch (Exception e) {
             TrackExchange.instance.getSLF4JLogger().error("Could not upload to butler", e);
+            return false;
         }
 
+        return true;
     }
 }

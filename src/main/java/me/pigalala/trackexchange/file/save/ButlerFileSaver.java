@@ -5,7 +5,7 @@ import me.pigalala.trackexchange.butler.ButlerFacade;
 public final class ButlerFileSaver implements TrackExchangeFileSaver {
 
     @Override
-    public void save(String name, byte[] bytes) {
-        ButlerFacade.upload(name, bytes);
+    public boolean save(String name, byte[] bytes) {
+        return ButlerFacade.upload(name, bytes);
     }
 }

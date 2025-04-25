@@ -30,7 +30,7 @@ public abstract class Process {
     }
 
     protected void notifyProcessFinishExceptionallyText() {
-        notifyPlayer(Component.text("Process '" + processName + "' completed exceptionally. Check any error messages above for more info.", NamedTextColor.RED));
+        notifyPlayer(Component.text("Process '" + processName + "' completed exceptionally. Check any error messages in the server console for more info.", NamedTextColor.RED));
     }
 
     protected void notifyStageBeginText(String stage) {

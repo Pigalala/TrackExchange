@@ -33,7 +33,7 @@ public class TrackExchangeFile {
         return Optional.ofNullable(schematic);
     }
 
-    public void write(String name, TrackExchangeFileSaver saver) throws IOException {
+    public boolean write(String name, TrackExchangeFileSaver saver) throws IOException {
         var data = new JsonObject();
         data.addProperty("version", TrackExchange.TRACK_VERSION);
         if (getSchematic().isPresent()) {
@@ -49,7 +49,7 @@ public class TrackExchangeFile {
         }
 
         byte[] bytes = compressBytes(dataBytes, trackBytes, schematicBytes);
-        saver.save(name, bytes);
+        return saver.save(name, bytes);
     }
 
     public static TrackExchangeFile read(String trackFileName, TrackExchangeFileReader fileReader, String newName) {
