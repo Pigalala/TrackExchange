@@ -18,7 +18,7 @@ pipeline {
                 script {
                     if (env.TAG_NAME) {
                         VERSION = "${TAG_NAME}"
-                    } else if (env.BRANCH_NAME == 'master') {
+                    } else if (env.BRANCH_NAME == 'main') {
                         VERSION = "${BUILD_NUMBER}"
                     } else {
                         VERSION = "${BRANCH_NAME}-${BUILD_NUMBER}"
