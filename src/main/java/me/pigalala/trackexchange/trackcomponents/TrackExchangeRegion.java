@@ -39,7 +39,7 @@ public class TrackExchangeRegion implements TrackComponent {
         maxP = new SimpleLocation(trackRegion.getMaxP());
 
         if (trackRegion instanceof TrackPolyRegion polyRegion) {
-            points = polyRegion.getPolygonal2DRegion().getPoints().stream().map(vec -> vec.getX() + " " + vec.getZ()).toList();
+            points = polyRegion.getPolygonal2DRegion().getPoints().stream().map(vec -> vec.x() + " " + vec.z()).toList();
         } else {
             points = List.of();
         }

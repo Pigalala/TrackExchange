@@ -23,9 +23,9 @@ public class SimpleLocation implements TrackComponent {
     }
 
     public SimpleLocation(BlockVector3 vector) {
-        x = vector.getX();
-        y = vector.getY();
-        z = vector.getZ();
+        x = vector.x();
+        y = vector.y();
+        z = vector.z();
         yaw = 0;
         pitch = 0;
     }
@@ -62,9 +62,9 @@ public class SimpleLocation implements TrackComponent {
     }
 
     public static BlockVector3 getOffset(BlockVector3 from, BlockVector3 to) {
-        double x = from.getX() - to.getX();
-        double y = from.getY() - to.getY();
-        double z = from.getZ() - to.getZ();
+        double x = from.x() - to.x();
+        double y = from.y() - to.y();
+        double z = from.z() - to.z();
         return BlockVector3.at(x, y, z);
     }
 
