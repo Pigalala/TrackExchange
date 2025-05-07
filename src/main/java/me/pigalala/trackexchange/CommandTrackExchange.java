@@ -14,6 +14,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Stack;
+
 @CommandAlias("trackexchange|tex|tx")
 public class CommandTrackExchange extends BaseCommand {
 
@@ -32,7 +34,9 @@ public class CommandTrackExchange extends BaseCommand {
             throw new ConditionFailedException("You cannot save a trackexchange track with that name");
         }
 
-        new ProcessSave(player, track, saveAs).execute();
+        var process = new ProcessSave(player, track, saveAs);
+        process.execute();
+        process.createInverse().ifPresent(TrackExchange.playerActions.computeIfAbsent(player.getUniqueId(), uuid -> new Stack<>())::push);
     }
 
     @Subcommand("paste")
@@ -58,7 +62,11 @@ public class CommandTrackExchange extends BaseCommand {
         if(ApiUtilities.checkTrackName(loadAs))
             throw new ConditionFailedException("That name is not legal");
 
-        new ProcessLoad(player, fileName, loadAs).execute();
+        var processLoad = new ProcessLoad(player, fileName, loadAs);
+        processLoad.execute();
+
+        // What the syntax
+        processLoad.createInverse().ifPresent(TrackExchange.playerActions.computeIfAbsent(player.getUniqueId(), uuid -> new Stack<>())::push);
     }
 
     @Subcommand("undo")
