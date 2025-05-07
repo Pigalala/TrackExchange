@@ -7,15 +7,17 @@ import lombok.Setter;
 import me.makkuusen.timing.system.ApiUtilities;
 import me.makkuusen.timing.system.TimingSystem;
 import me.makkuusen.timing.system.api.TimingSystemAPI;
+import me.makkuusen.timing.system.blutils.db.Db;
+import me.makkuusen.timing.system.blutils.db.row.DbRow;
+import me.makkuusen.timing.system.blutils.helper.result.Result;
 import me.makkuusen.timing.system.boatutils.BoatUtilsMode;
 import me.makkuusen.timing.system.database.TSDatabase;
 import me.makkuusen.timing.system.database.TrackDatabase;
-import me.makkuusen.timing.system.idb.DB;
-import me.makkuusen.timing.system.idb.DbRow;
 import me.makkuusen.timing.system.tplayer.TPlayer;
 import me.makkuusen.timing.system.track.Track;
 import me.makkuusen.timing.system.track.locations.TrackLeaderboard;
 import me.makkuusen.timing.system.track.regions.TrackRegion;
+import me.pigalala.trackexchange.TrackExchange;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -106,39 +108,49 @@ public class TrackExchangeTrack implements TrackComponent {
 
     public Track createTrack(Player playerPasting) throws SQLException {
         TPlayer owner = TimingSystemAPI.getTPlayer(this.owner);
-        if(owner == null)
+        if (owner == null)
             owner = TimingSystemAPI.getTPlayer(playerPasting.getUniqueId());
         World world = playerPasting.getWorld();
 
         Vector offset = SimpleLocation.getOffset(origin.toLocation(world).toBlockLocation(), playerPasting.getLocation().toBlockLocation());
         Location newSpawnLocation = spawnLocation.toLocation(world).subtract(offset);
 
-        long trackId = TimingSystem.getDatabase().createTrack(owner.getUniqueId().toString(), displayName, ApiUtilities.getTimestamp(), weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
-        DbRow dbRow = DB.getFirstRow("SELECT * FROM `ts_tracks` WHERE `id` = " + trackId + ";");
-        Track track = new Track(dbRow);
+        Result<Long, Throwable> trackCreateResult = TimingSystem.getDatabase().createTrack(owner.getUniqueId().toString(), displayName, ApiUtilities.getTimestamp(), weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
+        if (trackCreateResult.isErr()) {
+            TrackExchange.instance.getSLF4JLogger().error("Could not create track in database", trackCreateResult.unwrapErr());
+            throw new RuntimeException(trackCreateResult.unwrapErr());
+        }
+
+        Result<DbRow<String>, Throwable> fetchTrackResult = Db.fetchFirst("SELECT * FROM `ts_tracks` WHERE `id` = " + trackCreateResult + ";");
+        if (fetchTrackResult.isErr()) {
+            TrackExchange.instance.getSLF4JLogger().error("Could not fetch track from database", fetchTrackResult.unwrapErr());
+            throw new RuntimeException(fetchTrackResult.unwrapErr());
+        }
+
+        Track track = new Track(fetchTrackResult.unwrap());
         TrackDatabase.tracks.add(track);
 
         regions.stream().map(region -> region.toTrackRegion(track, world, offset)).forEach(trackRegion -> {
             track.getTrackRegions().add(trackRegion);
-            if(trackRegion.getRegionType() == TrackRegion.RegionType.START)
+            if (trackRegion.getRegionType() == TrackRegion.RegionType.START)
                 TrackDatabase.addTrackRegion(trackRegion);
         });
 
         locations.stream().map(loc -> loc.toTrackLocation(track, world, offset)).forEach(location -> {
             track.getTrackLocations().add(location);
-            if(location instanceof TrackLeaderboard leaderboard)
+            if (location instanceof TrackLeaderboard leaderboard)
                 leaderboard.createOrUpdateHologram();
         });
 
         tags.stream().map(TrackExchangeTag::toTrackTag).forEach(_trackTag -> {
-            if(_trackTag.isEmpty())
+            if (_trackTag.isEmpty())
                 return;
             track.getTrackTags().create(_trackTag.get());
         });
 
         contributors.forEach(uuid -> {
             TPlayer contributor = TSDatabase.getPlayer(uuid);
-            if(contributor == null)
+            if (contributor == null)
                 return;
             track.addContributor(contributor);
         });

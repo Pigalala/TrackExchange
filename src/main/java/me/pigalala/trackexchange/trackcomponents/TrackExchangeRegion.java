@@ -8,15 +8,18 @@ import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Polygonal2DRegion;
+import me.makkuusen.timing.system.blutils.helper.result.Err;
+import me.makkuusen.timing.system.blutils.helper.result.Ok;
+import me.makkuusen.timing.system.blutils.helper.result.Result;
 import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.track.Track;
 import me.makkuusen.timing.system.track.regions.TrackPolyRegion;
 import me.makkuusen.timing.system.track.regions.TrackRegion;
+import me.pigalala.trackexchange.TrackExchange;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,17 +98,25 @@ public class TrackExchangeRegion implements TrackComponent {
         Location minP = getMinP(world).subtract(offset);
         Location maxP = getMaxP(world).subtract(offset);
 
-        try {
-            if (getRegionShape() == TrackRegion.RegionShape.POLY) {
-                List<BlockVector2> points = new ArrayList<>();
-                getPoints().forEach(point -> {
-                    points.add(point.subtract(offset.getBlockX(), offset.getBlockZ()));
-                });
-                return TrackDatabase.trackRegionNew(new Polygonal2DRegion(BukkitAdapter.adapt(world), points, minP.getBlockY(), maxP.getBlockY()), track.getId(), regionIndex, getRegionType(), origin);
+        Result<TrackRegion, Throwable> regionResult;
+        if (getRegionShape() == TrackRegion.RegionShape.POLY) {
+            List<BlockVector2> points = new ArrayList<>();
+            getPoints().forEach(point -> {
+                points.add(point.subtract(offset.getBlockX(), offset.getBlockZ()));
+            });
+            regionResult = TrackDatabase.trackRegionNew(new Polygonal2DRegion(BukkitAdapter.adapt(world), points, minP.getBlockY(), maxP.getBlockY()), track.getId(), regionIndex, getRegionType(), origin);
+        } else {
+            regionResult = TrackDatabase.trackRegionNew(new CuboidRegion(BukkitAdapter.adapt(world), BlockVector3.at(minP.getBlockX(), minP.getBlockY(), minP.getBlockZ()), BlockVector3.at(maxP.getBlockX(), maxP.getBlockY(), maxP.getBlockZ())), track.getId(), regionIndex, getRegionType(), origin);
+        }
+
+        switch (regionResult) {
+            case Ok(TrackRegion region) -> {
+                return region;
             }
-            return TrackDatabase.trackRegionNew(new CuboidRegion(BukkitAdapter.adapt(world), BlockVector3.at(minP.getBlockX(), minP.getBlockY(), minP.getBlockZ()), BlockVector3.at(maxP.getBlockX(), maxP.getBlockY(), maxP.getBlockZ())), track.getId(), regionIndex, getRegionType(), origin);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.getMessage());
+            case Err(Throwable err) -> {
+                TrackExchange.instance.getSLF4JLogger().error("Could not create track region", err);
+                throw new RuntimeException(err);
+            }
         }
     }
 
