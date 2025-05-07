@@ -23,6 +23,7 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class ProcessSave extends Process {
@@ -55,6 +56,11 @@ public class ProcessSave extends Process {
                     else
                         notifyProcessFinishExceptionallyText();
                 });
+    }
+
+    @Override
+    public Optional<Runnable> createInverse() {
+        return Optional.empty();
     }
 
     private Void doTrackStage() {

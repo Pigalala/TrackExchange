@@ -5,6 +5,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.entity.Player;
 
+import java.util.Optional;
+
 public abstract class Process {
 
     protected final Player player;
@@ -48,4 +50,6 @@ public abstract class Process {
     }
 
     public abstract void execute();
+
+    public abstract Optional<Runnable> createInverse();
 }

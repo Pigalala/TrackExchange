@@ -20,6 +20,7 @@ import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,6 +31,9 @@ public class ProcessLoad extends Process {
 
     private final TaskChain<?> chain;
     private final Location origin;
+
+    boolean createdTrack;
+    boolean createdSchematic;
 
     public ProcessLoad(Player player, String fileName, String loadAs) {
         super(player, "LOAD");
@@ -51,13 +55,35 @@ public class ProcessLoad extends Process {
                     CompletableFuture.supplyAsync(this::doPasteStage)
                     )).execute((success) -> {
                 if (success) {
-                    createUndo();
                     notifyProcessFinishText(System.currentTimeMillis() - startTime);
                 } else {
                     notifyProcessFinishExceptionallyText();
                 }
             }
         );
+    }
+
+    @Override
+    public Optional<Runnable> createInverse() {
+        if (!createdTrack && !createdSchematic) {
+            return Optional.empty();
+        }
+
+        return Optional.of(() -> {
+            if (createdSchematic) {
+                Bukkit.getScheduler().runTaskAsynchronously(TrackExchange.instance, () -> {
+                    try (EditSession undoSession = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(player))) {
+                        EditSession session = chain.getTaskData("editSession");
+                        session.undo(undoSession);
+                    }
+                });
+            }
+
+            if (createdTrack) {
+                Track track = chain.getTaskData("track");
+                TrackDatabase.removeTrack(track);
+            }
+        });
     }
 
     private void doReadStage() {
@@ -104,6 +130,7 @@ public class ProcessLoad extends Process {
             chain.abortChain();
         }
 
+        createdTrack = true;
         return null;
     }
 
@@ -118,6 +145,7 @@ public class ProcessLoad extends Process {
                 EditSession session = schematic.pasteAt(origin);
                 chain.setTaskData("editSession", session);
                 notifyStageFinishText(stage, System.currentTimeMillis() - startTime);
+                createdSchematic = true;
             } catch (WorldEditException e) {
                 notifyStageFinishExceptionallyText(stage, e);
             }
@@ -126,24 +154,5 @@ public class ProcessLoad extends Process {
         });
 
         return null;
-    }
-
-    private void createUndo() {
-        Runnable undoAction = () -> {
-            Track track = chain.getTaskData("track");
-            EditSession session = chain.getTaskData("editSession");
-            player.sendMessage(Component.text("Undoing track " + track.getDisplayName() + ".", NamedTextColor.YELLOW));
-            if (session != null) {
-                Bukkit.getScheduler().runTaskAsynchronously(TrackExchange.instance, () -> {
-                    try (EditSession undoSession = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(player))) {
-                        session.undo(undoSession);
-                    }
-                });
-            }
-            TrackDatabase.removeTrack(track);
-        };
-
-        TrackExchange.playerActions.putIfAbsent(player.getUniqueId(), new Stack<>());
-        TrackExchange.playerActions.get(player.getUniqueId()).push(undoAction);
     }
 }
