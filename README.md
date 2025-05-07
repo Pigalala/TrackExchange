@@ -1,6 +1,6 @@
 # TrackExchange
 
-TrackExchange is an addon for [TimingSystem](https://github.com/Makkuusen/TimingSystem) which allows you to copy and paste tracks.
+TrackExchange is an addon for [TimingSystem](https://github.com/FrostHexABG/TimingSystem) which allows you to copy and paste tracks.
 
 These copied tracks are saved as `.trackexchange` files and can be transferred between servers if needed.
 
