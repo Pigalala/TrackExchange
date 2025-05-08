@@ -36,7 +36,6 @@ public class CommandTrackExchange extends BaseCommand {
 
         var process = new ProcessSave(player, track, saveAs);
         process.execute();
-        process.createInverse().ifPresent(TrackExchange.playerActions.computeIfAbsent(player.getUniqueId(), uuid -> new Stack<>())::push);
     }
 
     @Subcommand("paste")
