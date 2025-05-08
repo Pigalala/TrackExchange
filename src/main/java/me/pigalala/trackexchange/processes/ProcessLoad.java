@@ -65,10 +65,6 @@ public class ProcessLoad extends Process {
 
     @Override
     public Optional<Runnable> createInverse() {
-        if (!createdTrack) {
-            return Optional.empty();
-        }
-
         return Optional.of(() -> {
             if (createdSchematic) {
                 Bukkit.getScheduler().runTaskAsynchronously(TrackExchange.instance, () -> {
