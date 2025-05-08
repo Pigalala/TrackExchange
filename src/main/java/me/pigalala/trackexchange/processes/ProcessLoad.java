@@ -65,7 +65,7 @@ public class ProcessLoad extends Process {
 
     @Override
     public Optional<Runnable> createInverse() {
-        if (!createdTrack && !createdSchematic) {
+        if (!createdTrack) {
             return Optional.empty();
         }
 
