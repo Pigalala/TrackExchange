@@ -121,7 +121,7 @@ public class TrackExchangeTrack implements TrackComponent {
             throw new RuntimeException(trackCreateResult.unwrapErr());
         }
 
-        Result<DbRow<String>, Throwable> fetchTrackResult = Db.fetchFirst("SELECT * FROM `ts_tracks` WHERE `id` = " + trackCreateResult + ";");
+        Result<DbRow<String>, Throwable> fetchTrackResult = Db.fetchFirst("SELECT * FROM `ts_tracks` WHERE `id` = ?;", trackCreateResult.unwrap());
         if (fetchTrackResult.isErr()) {
             TrackExchange.instance.getSLF4JLogger().error("Could not fetch track from database", fetchTrackResult.unwrapErr());
             throw new RuntimeException(fetchTrackResult.unwrapErr());
