@@ -15,6 +15,7 @@ import me.makkuusen.timing.system.database.TSDatabase;
 import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.tplayer.TPlayer;
 import me.makkuusen.timing.system.track.Track;
+import me.makkuusen.timing.system.track.TrackDifficulty;
 import me.makkuusen.timing.system.track.locations.TrackLeaderboard;
 import me.makkuusen.timing.system.track.regions.TrackRegion;
 import me.pigalala.trackexchange.TrackExchange;
@@ -38,6 +39,7 @@ public class TrackExchangeTrack implements TrackComponent {
     private final int weight;
     private final String trackType;
     private final short boatUtilsMode;
+    private final int difficulty;
 
     private final List<UUID> contributors;
     private final List<TrackExchangeRegion> regions;
@@ -57,6 +59,7 @@ public class TrackExchangeTrack implements TrackComponent {
         weight = track.getWeight();
         trackType = track.getType().toString();
         boatUtilsMode = track.getBoatUtilsMode().getId();
+        difficulty = track.getDifficulty().map(TrackDifficulty::ordinal).orElse(-1);
 
         contributors = track.getContributors().stream().map(TPlayer::getUniqueId).toList();
         regions = track.getTrackRegions().getRegions().stream().map(TrackExchangeRegion::new).toList();
@@ -75,6 +78,7 @@ public class TrackExchangeTrack implements TrackComponent {
         weight = trackBody.get("weight").getAsInt();
         trackType = trackBody.get("trackType").getAsString();
         boatUtilsMode = trackBody.get("boatUtilsMode").getAsShort();
+        difficulty = trackBody.has("difficulty") ? trackBody.get("difficulty").getAsInt() : -1;
 
         contributors = trackBody.get("contributors").getAsJsonArray().asList().stream()
                 .map(json -> UUID.fromString(json.getAsString()))
@@ -130,6 +134,10 @@ public class TrackExchangeTrack implements TrackComponent {
         Track track = new Track(fetchTrackResult.unwrap());
         TrackDatabase.tracks.add(track);
 
+        if (difficulty > -1) {
+            track.setDifficulty(TrackDifficulty.values()[difficulty]);
+        }
+
         regions.stream().map(region -> region.toTrackRegion(track, world, offset)).forEach(trackRegion -> {
             track.getTrackRegions().add(trackRegion);
             if (trackRegion.getRegionType() == TrackRegion.RegionType.START)
@@ -171,6 +179,9 @@ public class TrackExchangeTrack implements TrackComponent {
         trackBody.addProperty("weight", weight);
         trackBody.addProperty("trackType", trackType);
         trackBody.addProperty("boatUtilsMode", boatUtilsMode);
+        if (difficulty > -1) {
+            trackBody.addProperty("difficulty", difficulty);
+        }
         trackBody.add("spawn", spawnLocation.asJson());
         trackBody.add("origin", origin.asJson());
 
