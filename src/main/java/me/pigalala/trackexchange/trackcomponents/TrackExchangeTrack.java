@@ -37,7 +37,6 @@ public class TrackExchangeTrack implements TrackComponent {
     private final UUID owner;
     private final String guiItem;
     private final int weight;
-    private final String trackType;
     private final short boatUtilsMode;
     private final int difficulty;
 
@@ -57,12 +56,11 @@ public class TrackExchangeTrack implements TrackComponent {
         owner = track.getOwner().getUniqueId();
         guiItem = ApiUtilities.itemToString(track.getItem());
         weight = track.getWeight();
-        trackType = track.getType().toString();
         boatUtilsMode = track.getBoatUtilsMode().getId();
         difficulty = track.getDifficulty().map(TrackDifficulty::ordinal).orElse(-1);
 
         contributors = track.getContributors().stream().map(TPlayer::getUniqueId).toList();
-        regions = track.getTrackRegions().getRegions().stream().map(TrackExchangeRegion::new).toList();
+        regions = track.getTrackRegions().getAllRegions().stream().map(TrackExchangeRegion::new).toList();
         locations = track.getTrackLocations().getLocations().stream().map(TrackExchangeLocation::new).toList();
         tags = track.getTrackTags().get().stream().map(TrackExchangeTag::new).toList();
         options = track.getTrackOptions().getTrackOptions().stream().map(TrackExchangeOption::new).toList();
@@ -76,7 +74,6 @@ public class TrackExchangeTrack implements TrackComponent {
         owner = UUID.fromString(trackBody.get("owner").getAsString());
         guiItem = trackBody.get("guiItem").getAsString();
         weight = trackBody.get("weight").getAsInt();
-        trackType = trackBody.get("trackType").getAsString();
         boatUtilsMode = trackBody.get("boatUtilsMode").getAsShort();
         difficulty = trackBody.has("difficulty") ? trackBody.get("difficulty").getAsInt() : -1;
 
@@ -119,7 +116,7 @@ public class TrackExchangeTrack implements TrackComponent {
         Vector offset = SimpleLocation.getOffset(origin.toLocation(world).toBlockLocation(), playerPasting.getLocation().toBlockLocation());
         Location newSpawnLocation = spawnLocation.toLocation(world).subtract(offset);
 
-        Result<Long, Throwable> trackCreateResult = TimingSystem.getDatabase().createTrack(owner.getUniqueId().toString(), displayName, ApiUtilities.getTimestamp(), weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, Track.TrackType.valueOf(trackType), BoatUtilsMode.getMode(boatUtilsMode));
+        Result<Long, Throwable> trackCreateResult = TimingSystem.getDatabase().createTrack(owner.getUniqueId().toString(), displayName, ApiUtilities.getTimestamp(), weight, ApiUtilities.stringToItem(guiItem), newSpawnLocation, BoatUtilsMode.getMode(boatUtilsMode));
         if (trackCreateResult.isErr()) {
             TrackExchange.instance.getSLF4JLogger().error("Could not create track in database", trackCreateResult.unwrapErr());
             throw new RuntimeException(trackCreateResult.unwrapErr());
@@ -177,7 +174,7 @@ public class TrackExchangeTrack implements TrackComponent {
         trackBody.addProperty("dateCreated", ApiUtilities.getTimestamp()); // Send date created for backwards compatibility
         trackBody.addProperty("guiItem", guiItem);
         trackBody.addProperty("weight", weight);
-        trackBody.addProperty("trackType", trackType);
+        trackBody.addProperty("trackType", "BOAT"); // For compatibility for other TimingSystems.
         trackBody.addProperty("boatUtilsMode", boatUtilsMode);
         if (difficulty > -1) {
             trackBody.addProperty("difficulty", difficulty);

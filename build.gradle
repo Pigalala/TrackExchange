@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
-    compileOnly 'me.makkuusen.timing.system:TimingSystem:424'
+    compileOnly 'me.makkuusen.timing.system:TimingSystem:433'
     compileOnly 'com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.12.3'
 
     implementation 'co.aikar:acf-paper:0.5.1-SNAPSHOT'
