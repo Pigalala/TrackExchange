@@ -3,6 +3,8 @@ package me.pigalala.trackexchange.trackcomponents;
 import com.google.gson.JsonObject;
 import me.makkuusen.timing.system.track.options.TrackOption;
 
+import java.util.Optional;
+
 public class TrackExchangeOption implements TrackComponent {
 
     private final int id;
@@ -15,8 +17,12 @@ public class TrackExchangeOption implements TrackComponent {
         id = optionBody.get("id").getAsInt();
     }
 
-    public TrackOption toTrackOption() {
-        return TrackOption.fromID(id);
+    public Optional<TrackOption> toTrackOption() {
+        try {
+            return Optional.of(TrackOption.fromID(id));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     public JsonObject asJson() {

@@ -27,6 +27,7 @@ import org.bukkit.util.Vector;
 import javax.annotation.Nullable;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -160,9 +161,11 @@ public class TrackExchangeTrack implements TrackComponent {
             track.addContributor(contributor);
         });
 
-        options.stream().map(TrackExchangeOption::toTrackOption).forEach(option -> {
-            track.getTrackOptions().create(option);
-        });
+        options.stream()
+                .map(TrackExchangeOption::toTrackOption)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(option -> track.getTrackOptions().create(option));
 
         return track;
     }
