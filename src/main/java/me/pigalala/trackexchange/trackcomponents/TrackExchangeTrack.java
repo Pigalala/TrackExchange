@@ -9,6 +9,7 @@ import me.makkuusen.timing.system.TimingSystem;
 import me.makkuusen.timing.system.api.TimingSystemAPI;
 import me.makkuusen.timing.system.blutils.db.Db;
 import me.makkuusen.timing.system.blutils.db.row.DbRow;
+import me.makkuusen.timing.system.blutils.helper.option.Option;
 import me.makkuusen.timing.system.blutils.helper.result.Result;
 import me.makkuusen.timing.system.boatutils.BoatUtilsMode;
 import me.makkuusen.timing.system.database.TSDatabase;
@@ -123,13 +124,17 @@ public class TrackExchangeTrack implements TrackComponent {
             throw new RuntimeException(trackCreateResult.unwrapErr());
         }
 
-        Result<DbRow<String>, Throwable> fetchTrackResult = Db.fetchFirst("SELECT * FROM `ts_tracks` WHERE `id` = ?;", trackCreateResult.unwrap());
+        Result<Option<DbRow<String>>, Throwable> fetchTrackResult = Db.fetchFirst("SELECT * FROM `ts_tracks` WHERE `id` = ?;", trackCreateResult.unwrap());
         if (fetchTrackResult.isErr()) {
             TrackExchange.instance.getSLF4JLogger().error("Could not fetch track from database", fetchTrackResult.unwrapErr());
             throw new RuntimeException(fetchTrackResult.unwrapErr());
         }
+        if (fetchTrackResult.unwrap().isNone()) {
+            TrackExchange.instance.getSLF4JLogger().error("No track was found in database with id {}", trackCreateResult.unwrap());
+            throw new RuntimeException("No track was found.");
+        }
 
-        Track track = new Track(fetchTrackResult.unwrap());
+        Track track = new Track(fetchTrackResult.unwrap().unwrap());
         TrackDatabase.tracks.add(track);
 
         if (difficulty > -1) {
