@@ -12,6 +12,7 @@ import me.makkuusen.timing.system.blutils.db.row.DbRow;
 import me.makkuusen.timing.system.blutils.helper.option.Option;
 import me.makkuusen.timing.system.blutils.helper.result.Result;
 import me.makkuusen.timing.system.boatutils.BoatUtilsMode;
+import me.makkuusen.timing.system.boatutils.TrackBoatUtilsSettings;
 import me.makkuusen.timing.system.database.TSDatabase;
 import me.makkuusen.timing.system.database.TrackDatabase;
 import me.makkuusen.timing.system.tplayer.TPlayer;
@@ -171,6 +172,11 @@ public class TrackExchangeTrack implements TrackComponent {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .forEach(option -> track.getTrackOptions().create(option));
+
+        if (boatUtilsSetting != null) {
+            TrackBoatUtilsSettings buSetting = boatUtilsSetting.asBoatUtilsSetting(trackCreateResult.unwrap().intValue());
+            buSetting.getSettingsList().forEach(mod -> track.getBoatUtilsSetting().add(mod));
+        }
 
         return track;
     }
